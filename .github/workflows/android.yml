@@ -1,0 +1,67 @@
+name: android-ci
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - preset: android-arm64-debug
+          - preset: android-arm-debug
+
+    runs-on: ubuntu-22.04
+    env:
+      NDK_VERSION: 25.2.9519653
+      VCPKG_ROOT: /opt/vcpkg
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config cmake
+      
+      - name: Cache vcpkg
+        uses: actions/cache@v3
+        with:
+          key: vcpkg-${{matrix.config.preset}}
+          path: /opt/vcpkg
+
+      - name: Setup vcpkg
+        run: |
+          sudo rm -f /usr/local/bin/vcpkg  # clean up
+          test -d $VCPKG_ROOT || (mkdir -p $VCPKG_ROOT && git clone https://github.com/Microsoft/vcpkg.git $VCPKG_ROOT)
+          cd $VCPKG_ROOT
+          git pull --ff
+          ./bootstrap-vcpkg.sh
+          sudo ln -s $(pwd)/vcpkg /usr/local/bin/vcpkg
+          which vcpkg
+          vcpkg --version
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: "11.x"
+
+      - name: Configure NDK
+        env:
+          ANDROID_ROOT: /usr/local/lib/android
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          SDKMANAGER=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager
+          echo "y" | $SDKMANAGER "ndk;$NDK_VERSION"
+
+      - name: Configure
+        env:
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          export NDK=/usr/local/lib/android/sdk/ndk/$NDK_VERSION
+          cmake -S . --preset ${{matrix.config.preset}}
+
+      - name: Build
+        run: cmake --build --preset ${{matrix.config.preset}}
