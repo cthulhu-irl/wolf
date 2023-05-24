@@ -9,11 +9,16 @@ on:
 jobs:
   build:
     strategy:
-      fail-fast: false
       matrix:
         config:
           - preset: android-arm64-debug
+          - preset: android-arm64-release
           - preset: android-arm-debug
+          - preset: android-arm-release
+          - preset: android-x86_64-debug
+          - preset: android-x86_64-release
+          - preset: android-x86-debug
+          - preset: android-x86-release
 
     runs-on: ubuntu-22.04
     env:
