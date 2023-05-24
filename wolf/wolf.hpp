@@ -130,17 +130,8 @@ W_API std::string w_init();
  * @return a string
  */
 #ifdef _MSC_VER
-template <class... Args>
-W_API std::string format(_In_ const std::string_view p_fmt,
-                         _In_ Args &&...p_args) {
-  return std::vformat(p_fmt,
-                      std::make_format_args(std::forward<Args>(p_args)...));
-}
+using std::format;
 #else
-template <class... Args>
-W_API std::string format(_In_ const fmt::v9::format_string<Args...> p_fmt,
-                         _In_ Args &&...p_args) {
-  return fmt::v9::vformat(p_fmt, fmt::v9::make_format_args(p_args...));
-}
+using fmt::format;
 #endif  // _MSC_VER
 }  // namespace wolf
