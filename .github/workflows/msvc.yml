@@ -6,7 +6,7 @@
 # Find more information at:
 # https://github.com/microsoft/msvc-code-analysis-action
 
-name: Microsoft C++ Code Analysis
+name: Windows x64 C++ Code Analysis
 
 on:
   push:
