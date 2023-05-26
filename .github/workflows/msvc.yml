@@ -12,7 +12,6 @@ env:
   # Path to the CMake build directory.
   build: "${{ github.workspace }}/build"
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/.cache
 
 permissions:
   contents: read
@@ -34,10 +33,6 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
           .\vcpkg\vcpkg integrate install
-
-      - name: Add vcpkg to environment variable
-        run: |
-          echo "VCPKG_ROOT=$(pwd)/vcpkg" >> $GITHUB_ENV
 
       - name: Get SW
         uses: egorpugin/sw-action@master
