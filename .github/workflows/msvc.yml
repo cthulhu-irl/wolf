@@ -49,18 +49,15 @@ jobs:
           echo "C:\Program Files\OpenCppCoverage" >> $env:GITHUB_PATH
 
       - name: Configure CMake via Debug mode
-        run: cmake -S . -B ${{ env.build }}/windows-x64-msvc-static --preset=windows-x64-msvc-static -DCMAKE_BUILD_TYPE=Debug
-         
-      # - name: Build CMake via Debug mode
-      #   run: cmake --build ${{ env.build }}/windows-x64-msvc-static --config Debug
+        run: cmake -S . -B ${{ env.build }} --preset=windows-x64-msvc-static -DCMAKE_BUILD_TYPE=Debug
 
-      - name: Run MSVC Code Analysis on Debug mode
-        uses: microsoft/msvc-code-analysis-action@04825f6d9e00f87422d6bf04e1a38b1f3ed60d99
+      - name: Microsoft C++ Code Analysis Action
+        uses: microsoft/msvc-code-analysis-action@v0.1.1
         # Provide a unique ID to access the sarif output path
         id: run-analysis
         with:
-          cmakeBuildDirectory: ${{ env.build }}/windows-x64-msvc-static
-          # Ruleset file that will determine what checks will be run
+          cmakeBuildDirectory: ${{ env.build }}
+          buildConfiguration: Debug
           ruleset: NativeRecommendedRules.ruleset
           ignoredTargetPaths: ${{ env.build }}/_deps;${{ env.build }}/_deps/tesseract-src
 
@@ -89,11 +86,11 @@ jobs:
           path: ${{ steps.run-analysis.outputs.sarif }}
 
       - name: Build CMake via Release mode
-        run: cmake --build ${{ env.build }}/windows-x64-msvc-static --config Release
+        run: cmake --build ${{ env.build }} --config Release
 
       - name: Build CMake via RelWithDebInfo mode
-        run: cmake --build ${{ env.build }}/windows-x64-msvc-static --config RelWithDebInfo
+        run: cmake --build ${{ env.build }} --config RelWithDebInfo
 
       - name: Build CMake via MinSizeRel mode
-        run: cmake --build ${{ env.build }}/windows-x64-msvc-static --config MinSizeRel
+        run: cmake --build ${{ env.build }} --config MinSizeRel
           
