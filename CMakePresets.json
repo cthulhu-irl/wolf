@@ -72,7 +72,8 @@
                 "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
                 "CMAKE_SYSTEM_NAME": "Android",
                 "CMAKE_TOOLCHAIN_FILE": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake",
-                "CPU": "arm"
+                "CPU": "arm",
+                "VCPKG_PLATFORM_TOOLSET": "clang"
             }
         },
         {
