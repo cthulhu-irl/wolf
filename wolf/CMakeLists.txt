@@ -173,9 +173,9 @@ set(GETOPT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/system)
 # include cmakes
 include(cmake/vcpkg.cmake)
 include(cmake/system.cmake)
-include(cmake/stream.cmake)
-include(cmake/media.cmake)
-include(cmake/ml.cmake)
+# include(cmake/stream.cmake)
+# include(cmake/media.cmake)
+# include(cmake/ml.cmake)
 
 if (EMSCRIPTEN)
     message(WARNING "WOLF_TEST will be disabled for Emscripten")
@@ -229,12 +229,6 @@ elseif (EMSCRIPTEN)
 elseif(APPLE)
     add_definitions(-DNEED_XLOCALE_H=1)
 endif()
-
-# if(CMAKE_BUILD_TYPE MATCHES Debug OR "${CMAKE_BUILD_TYPE}" STREQUAL "")
-#     add_definitions(-DDEBUG -D_DEBUG)
-# else()
-#     add_definitions(-DNDEBUG)
-# endif()
 
 # setup Wolf definitions
 get_cmake_property(_vars VARIABLES)
