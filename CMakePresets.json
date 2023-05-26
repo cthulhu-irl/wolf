@@ -56,6 +56,7 @@
             "name": "base-android",
             "hidden": true,
             "inherits": "base",
+            "generator": "Ninja",
             "cacheVariables": {
                 "ANDROID_ABI": "armeabi-v7a",
                 "ANDROID_NATIVE_API_LEVEL": "24",
@@ -67,6 +68,7 @@
                 "ARCH": "arm",
                 "CMAKE_ANDROID_NDK": "$env{ANDROID_NDK_HOME}",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
                 "CMAKE_SYSTEM_NAME": "Android",
                 "CMAKE_TOOLCHAIN_FILE": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake",
                 "CPU": "arm"
