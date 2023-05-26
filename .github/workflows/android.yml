@@ -9,6 +9,9 @@ on:
 env:
   # Path to the CMake build directory.
   build: "${{ github.workspace }}/build"
+  ANDROID_ROOT: /usr/local/lib/android
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+  NDK_VERSION: 25.2.9519653
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
   
 jobs:
@@ -37,18 +40,24 @@ jobs:
         ./vcpkg/bootstrap-vcpkg.sh
         ./vcpkg/vcpkg integrate install
 
-    - name: Set Android NDK
-      uses: nttld/setup-ndk@v1
-      id: setup-ndk
+    - uses: actions/setup-java@v1
       with:
-        ndk-version: r25c
-        add-to-path: false
-    - run: ./build.sh
-      env:
-        ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        java-version: "11.x"
 
-    - name: Confihure Cmake
+    - name: Configure SDK
+      run: |
+        SDKMANAGER=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager
+        echo "y" | $SDKMANAGER "ndk;$NDK_VERSION"
+
+    - name: Configure NDK
+      env:
+        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      run: |
+        export ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/$NDK_VERSION
+
+    - name: Configure Cmake
       run: cmake -S . -B ${{ env.build }} --preset ${{matrix.config.preset}}
+      
     - name: Build CMake in Debug mode
       run: cmake --build ${{ env.build }} --config Debug
 
