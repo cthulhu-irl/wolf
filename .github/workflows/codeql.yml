@@ -57,10 +57,10 @@ jobs:
         # queries: security-extended,security-and-quality
 
 
-    - name: Configure CMake via Debug mode
+    - name: Configure CMake in Debug mode
       run: cmake -S . -B ${{ env.build }} --preset=linux-x64-gnu-shared
  
-    - name: Build CMake via Debug mode
+    - name: Build CMake in Debug mode
       run: cmake --build ${{ env.build }} --config Debug
 
     # ℹ️ Command-line programs to run using the OS shell.
@@ -78,5 +78,5 @@ jobs:
       with:
         category: "/language:${{matrix.language}}"
     
-    - name: Build CMake via Release mode
+    - name: Build CMake in Release mode
       run: cmake --build ${{ env.build }} --config Release

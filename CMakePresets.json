@@ -52,20 +52,58 @@
                 "LIBRARY_TYPE": "SHARED",
                 "VCPKG_TARGET_TRIPLET": "x64-linux"
             }
+        },
+        {
+            "name": "base-android",
+            "hidden": true,
+            "inherits": "base",
+            "cacheVariables": {
+                "ANDROID_ABI": "armeabi-v7a",
+                "ANDROID_NATIVE_API_LEVEL": "24",
+                "ANDROID_NDK": "$env{ANDROID_NDK_HOME}",
+                "ANDROID_PLATFORM": "android-24",
+                "ANDROID_STL": "c++_shared",
+                "ANDROID_TOOLCHAIN": "clang",
+                "ANDROID": true,
+                "ARCH": "arm",
+                "CMAKE_ANDROID_NDK": "$env{ANDROID_NDK_HOME}",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_SYSTEM_NAME": "Android",
+                "CMAKE_TOOLCHAIN_FILE": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake",
+                "CPU": "arm"
+            }
+        },
+        {
+            "name": "android-arm-clang-shared",
+            "inherits": "base-android",
+            "hidden": false,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/install/${presetName}",
+            "cacheVariables": {
+                "ANDROID_ARM_NEON": "OFF",
+                "CMAKE_ANDROID_ARCH_ABI": "armeabi-v7a",
+                "VCPKG_TARGET_TRIPLET": "arm-android"
+            }
         }
     ],
     "buildPresets": [
         {
-            "name": "windows-x64-msvc-static",
+            "configurePreset": "windows-x64-msvc-static",
+            "description": "Build wolf for Windows x64 arch as a static library",
             "displayName": "windows-x64-msvc-static",
-            "description": "Build wolf for Windows x64 as a static library",
-            "configurePreset": "windows-x64-msvc-static"
+            "name": "windows-x64-msvc-static"
         },
         {
-            "name": "linux-x64-gnu-shared",
+            "configurePreset": "linux-x64-gnu-shared",
+            "description": "Build wolf for Linux x64 arch as a shared library",
             "displayName": "linux-x64-gnu-shared",
-            "description": "Build wolf for linux x64 as a shared library",
-            "configurePreset": "linux-x64-gnu-shared"
+            "name": "linux-x64-gnu-shared"
+        },
+        {
+            "configurePreset": "android-arm-clang-shared",
+            "description": "Build wolf for Android armeabi-v7a arch as a shared library",
+            "displayName": "android-arm-clang-shared",
+            "name": "android-arm-clang-shared"
         }
     ]
 }

@@ -1,4 +1,4 @@
-name: android-ci
+name: android-multi-ABIs
 
 on:
   push:
@@ -6,21 +6,22 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  # Path to the CMake build directory.
+  build: "${{ github.workspace }}/build"
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
 jobs:
   build:
     strategy:
       matrix:
         config:
-          - preset: android-arm64-debug
-          - preset: android-arm64-release
-          - preset: android-arm-debug
-          - preset: android-arm-release
-          - preset: android-x86_64-debug
-          - preset: android-x86_64-release
-          - preset: android-x86-debug
-          - preset: android-x86-release
+          - preset: android-arm-clang-shared
+          # - preset: android-arm64-clang-shared
+          # - preset: android-x86-clang-shared
+          # - preset: android-x86_64-clang-shared
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     env:
       NDK_VERSION: 25.2.9519653
       VCPKG_ROOT: /opt/vcpkg
@@ -32,28 +33,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ninja-build pkg-config cmake
       
-      - name: Cache vcpkg
-        uses: actions/cache@v3
-        with:
-          key: vcpkg-${{matrix.config.preset}}
-          path: /opt/vcpkg
-
-      - name: Setup vcpkg
+      - name: Set up vcpkg
         run: |
-          sudo rm -f /usr/local/bin/vcpkg  # clean up
-          test -d $VCPKG_ROOT || (mkdir -p $VCPKG_ROOT && git clone https://github.com/Microsoft/vcpkg.git $VCPKG_ROOT)
-          cd $VCPKG_ROOT
-          git pull --ff
-          ./bootstrap-vcpkg.sh
-          sudo ln -s $(pwd)/vcpkg /usr/local/bin/vcpkg
-          which vcpkg
-          vcpkg --version
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.sh
+          ./vcpkg/vcpkg integrate install
 
-      - uses: actions/setup-java@v1
+      - name: Setup JAVA
+        - uses: actions/setup-java@v1
         with:
           java-version: "11.x"
 
-      - name: Configure NDK
+      - name: Configure Android SDK
         env:
           ANDROID_ROOT: /usr/local/lib/android
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
@@ -61,12 +52,19 @@ jobs:
           SDKMANAGER=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager
           echo "y" | $SDKMANAGER "ndk;$NDK_VERSION"
 
-      - name: Configure
+      - name: Configure Android NDK
         env:
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          export NDK=/usr/local/lib/android/sdk/ndk/$NDK_VERSION
-          cmake -S . --preset ${{matrix.config.preset}}
+          export ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/$NDK_VERSION
+          cmake -S . -B  --preset ${{matrix.config.preset}}
 
-      - name: Build
-        run: cmake --build --preset ${{matrix.config.preset}}
+      - name: Confihure Cmake
+        run: cmake -S . -B ${{ env.build }} --preset ${{matrix.config.preset}}
+
+      - name: Build CMake in Debug mode
+        run: cmake --build ${{ env.build }} --config Debug
+
+      - name: Build CMake in Release mode
+        run: cmake --build ${{ env.build }} --config Release
+        

@@ -48,10 +48,10 @@ jobs:
           choco install OpenCppCoverage -y
           echo "C:\Program Files\OpenCppCoverage" >> $env:GITHUB_PATH
 
-      - name: Configure CMake via Debug mode
+      - name: Configure CMake in Debug mode
         run: cmake -S . -B ${{ env.build }} --preset=windows-x64-msvc-static
  
-      - name: Build CMake via Debug mode
+      - name: Build CMake in Debug mode
         run: cmake --build ${{ env.build }} --config Debug
 
       - name: Microsoft C++ Code Analysis Action
@@ -88,12 +88,12 @@ jobs:
           name: sarif-file
           path: ${{ steps.run-analysis.outputs.sarif }}
 
-      - name: Build CMake via Release mode
+      - name: Build CMake in Release mode
         run: cmake --build ${{ env.build }} --config Release
 
-      - name: Build CMake via RelWithDebInfo mode
+      - name: Build CMake in RelWithDebInfo mode
         run: cmake --build ${{ env.build }} --config RelWithDebInfo
 
-      - name: Build CMake via MinSizeRel mode
+      - name: Build CMake in MinSizeRel mode
         run: cmake --build ${{ env.build }} --config MinSizeRel
           
