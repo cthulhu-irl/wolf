@@ -6,19 +6,18 @@
     },
     "configurePresets": [
         {
-            "name": "base",
+            "name": "base-x64",
             "hidden": true,
-            "description": "base project for other configurations.",
+            "description": "base project for x64 configurations.",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "installDir": "${sourceDir}/install/${presetName}",
             "cacheVariables": {
-                "ARCH": "win64",
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             }
         },
         {
             "name": "windows-x64-msvc-static",
-            "inherits": "base",
+            "inherits": "base-x64",
             "hidden": false,
             "generator": "Visual Studio 17 2022",
             "architecture": {
@@ -26,14 +25,32 @@
                 "strategy": "external"
             },
             "cacheVariables": {
+                "ARCH": "win64",
+                "CMAKE_CONFIGURATION_TYPES": "Debug;Release;RelWithDebInfo;MinSizeRel",
                 "LIBRARY_TYPE": "STATIC",
-                "VCPKG_TARGET_TRIPLET": "x64-windows-static",
-                "CMAKE_CONFIGURATION_TYPES": "Debug;Release;RelWithDebInfo;MinSizeRel"
+                "VCPKG_TARGET_TRIPLET": "x64-windows-static"
             },
             "condition": {
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Windows"
+            }
+        },
+        {
+            "name": "linux-x64-gnu-shared",
+            "inherits": "base-x64",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "generator": "Ninja",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
+                "LIBRARY_TYPE": "SHARED",
+                "VCPKG_TARGET_TRIPLET": "x64-linux"
             }
         }
     ],
@@ -43,6 +60,12 @@
             "displayName": "windows-x64-msvc-static",
             "description": "Build wolf for Windows x64 as a static library",
             "configurePreset": "windows-x64-msvc-static"
+        },
+        {
+            "name": "linux-x64-gnu-shared",
+            "displayName": "linux-x64-gnu-shared",
+            "description": "Build wolf for linux x64 as a shared library",
+            "configurePreset": "linux-x64-gnu-shared"
         }
     ]
 }
