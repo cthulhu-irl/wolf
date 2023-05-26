@@ -6,9 +6,9 @@
     },
     "configurePresets": [
         {
-            "name": "base-x64",
+            "name": "base",
             "hidden": true,
-            "description": "base project for x64 configurations.",
+            "description": "base project for configurations.",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "installDir": "${sourceDir}/install/${presetName}",
             "cacheVariables": {
@@ -17,7 +17,7 @@
         },
         {
             "name": "windows-x64-msvc-static",
-            "inherits": "base-x64",
+            "inherits": "base",
             "hidden": false,
             "generator": "Visual Studio 17 2022",
             "architecture": {
@@ -38,8 +38,7 @@
         },
         {
             "name": "linux-x64-gnu-shared",
-            "inherits": "base-x64",
-            "binaryDir": "${sourceDir}/build/${presetName}",
+            "inherits": "base",
             "generator": "Ninja",
             "architecture": {
                 "value": "x64",
@@ -57,6 +56,7 @@
             "name": "base-android",
             "hidden": true,
             "inherits": "base",
+            "generator": "Ninja",
             "cacheVariables": {
                 "ANDROID_ABI": "armeabi-v7a",
                 "ANDROID_NATIVE_API_LEVEL": "24",
