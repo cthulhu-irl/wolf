@@ -1,4 +1,4 @@
-name: windows-x64-cpp-code-analysis
+name: windows-x64-Microsoft C++ Code Analysis
 
 on:
   push:
