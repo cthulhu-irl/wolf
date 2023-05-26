@@ -1,4 +1,4 @@
-name: "ubuntu-latest-x64-CodeQL Analysis"
+name: "ubuntu-x64-CodeQL Analysis"
 
 on:
   push:
