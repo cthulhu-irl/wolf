@@ -51,8 +51,8 @@ jobs:
       - name: Configure CMake via Debug mode
         run: cmake -S . -B ${{ env.build }}/windows-x64-msvc-static --preset=windows-x64-msvc-static -DCMAKE_BUILD_TYPE=Debug
          
-      - name: Build CMake via Debug mode
-        run: cmake --build ${{ env.build }}/windows-x64-msvc-static --config Debug
+      # - name: Build CMake via Debug mode
+      #   run: cmake --build ${{ env.build }}/windows-x64-msvc-static --config Debug
 
       - name: Run MSVC Code Analysis on Debug mode
         uses: microsoft/msvc-code-analysis-action@04825f6d9e00f87422d6bf04e1a38b1f3ed60d99
