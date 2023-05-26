@@ -209,6 +209,19 @@ endif()
 
 # add definitions
 
+if (CMAKE_BUILD_TYPE STREQUAL "" OR NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Build type not specified. Defaulting to Debug")
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "YESSS Debug mode ${CMAKE_BUILD_TYPE}")
+    add_definitions(-DDEBUG)
+else()
+    message(STATUS "NOOOOOO debug mode ${CMAKE_BUILD_TYPE}")
+    add_definitions(-DNDEBUG)
+endif()
+
 add_definitions(
     -DBOOST_ASIO_NO_DEPRECATED
     -DBOOST_ASIO_HAS_CO_AWAIT
