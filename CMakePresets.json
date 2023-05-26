@@ -77,11 +77,12 @@
             "name": "android-arm-clang-shared",
             "inherits": "base-android",
             "hidden": false,
-            "binaryDir": "${sourceDir}/build/${presetName}",
-            "installDir": "${sourceDir}/install/${presetName}",
             "cacheVariables": {
                 "ANDROID_ARM_NEON": "OFF",
                 "CMAKE_ANDROID_ARCH_ABI": "armeabi-v7a",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
+                "CMAKE_CXX_COMPILER": "clang++",
                 "VCPKG_TARGET_TRIPLET": "arm-android"
             }
         }
