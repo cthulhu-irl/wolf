@@ -84,8 +84,37 @@ if (WOLF_STREAM_QUIC)
     target_link_directories(msquic-lib INTERFACE BEFORE ${msquic_SOURCE_DIR}/lib)
     target_link_libraries(msquic-lib INTERFACE msquic)
 
-    list(APPEND SRCS ${WOLF_STREAM_QUIC_SRCS})
     list(APPEND LIBS msquic::msquic)
+
+    file(GLOB_RECURSE WOLF_STREAM_QUIC_DATATYPES_SRC
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/datatypes/*"
+    )
+    file(GLOB_RECURSE WOLF_STREAM_QUIC_EVENTS_SRC
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/events/*"
+    )
+    file(GLOB_RECURSE WOLF_STREAM_QUIC_HANDLES_SRC
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/handles/*"
+    )
+    file(GLOB_RECURSE WOLF_STREAM_QUIC_INTERNAL_SRC
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/internal/*"
+    )
+    file(GLOB_RECURSE WOLF_STREAM_QUIC_SRC
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic_client.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic_client.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic_server.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic_server.hpp"
+    )
+
+    list(APPEND SRCS 
+        ${WOLF_STREAM_QUIC_DATATYPES_SRC} 
+        ${WOLF_STREAM_QUIC_EVENTS_SRC} 
+        ${WOLF_STREAM_QUIC_HANDLES_SRC} 
+        ${WOLF_STREAM_QUIC_INTERNAL_SRC} 
+        ${WOLF_STREAM_QUIC_SRC}
+    )
+
 endif()
 
 if (WOLF_STREAM_RIST)

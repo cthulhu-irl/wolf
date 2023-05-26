@@ -1,8 +1,4 @@
-#cmake . -B build -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI=armeabi-v7a -DANDROID_NDK=$ANDROID_NDK_HOME -DANDROID_PLATFORM=android-21 -DCMAKE_ANDROID_ARCH_ABI=armeabi-v7a -DCMAKE_ANDROID_NDK=$ANDROID_NDK_HOME -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=21 -DCMAKE_BUILD_TYPE=Debug -GNinja
-#cd build
-#ninja
-
-cmake_minimum_required(VERSION 3.22...3.23)
+cmake_minimum_required(VERSION 3.21)
 
 # set the name of the projects
 project(wolf
@@ -96,7 +92,7 @@ option(WOLF_MEDIA_STB "Enable stb headers" OFF)
 option(WOLF_MEDIA_GSTREAMER "Enable gstreamer wrapper" OFF)
 
 # stream modules
-option(WOLF_STREAM_GRPC   "Enable gRPC connection" ON)
+option(WOLF_STREAM_GRPC   "Enable gRPC connection" OFF)
 option(WOLF_STREAM_QUIC   "Enable QUIC" OFF)
 option(WOLF_STREAM_RIST   "Enable RIST streaming protocol" OFF)
 option(WOLF_STREAM_WEBRTC "Enable webRTC" OFF)
@@ -147,10 +143,10 @@ set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
-#set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
-  set(CMAKE_BUILD_TYPE "Debug")
-endif()
+# message("DDDDD ${CMAKE_BUILD_TYPE}")
+# if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+#   set(CMAKE_BUILD_TYPE "Debug")
+# endif()
 
 # set C++ flags based on compiler
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
@@ -234,11 +230,11 @@ elseif(APPLE)
     add_definitions(-DNEED_XLOCALE_H=1)
 endif()
 
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-    add_definitions(-DDEBUG -D_DEBUG)
-else()
-    add_definitions(-DNDEBUG)
-endif()
+# if(CMAKE_BUILD_TYPE MATCHES Debug OR "${CMAKE_BUILD_TYPE}" STREQUAL "")
+#     add_definitions(-DDEBUG -D_DEBUG)
+# else()
+#     add_definitions(-DNDEBUG)
+# endif()
 
 # setup Wolf definitions
 get_cmake_property(_vars VARIABLES)
@@ -302,6 +298,10 @@ source_group("protos" FILES ${WOLF_PROTOS})
 source_group("stream/grpc" FILES ${WOLF_STREAM_GRPC_SRC})
 source_group("stream/janus" FILES ${WOLF_STREAM_JANUS_SRC})
 source_group("stream/test" FILES ${WOLF_STREAM_TEST_SRC})
+source_group("stream/quic/datatypes" FILES ${WOLF_STREAM_QUIC_DATATYPES_SRC})
+source_group("stream/quic/events" FILES ${WOLF_STREAM_QUIC_EVENTS_SRC})
+source_group("stream/quic/handles" FILES ${WOLF_STREAM_QUIC_HANDLES_SRC})
+source_group("stream/quic/internal" FILES ${WOLF_STREAM_QUIC_INTERNAL_SRC})
 source_group("stream/quic" FILES ${WOLF_STREAM_QUIC_SRC})
 source_group("stream/rist" FILES ${WOLF_STREAM_RIST_SRC})
 source_group("stream/webrtc/capturer" FILES ${WOLF_STREAM_WEBRTC_CAPTURER_SRC})
@@ -309,7 +309,6 @@ source_group("stream/webrtc/data" FILES ${WOLF_STREAM_WEBRTC_DATA_SRC})
 source_group("stream/webrtc/interceptor" FILES ${WOLF_STREAM_WEBRTC_INTERCEPTOR_SRC})
 source_group("stream/webrtc/media" FILES ${WOLF_STREAM_WEBRTC_MEDIA_SRC})
 source_group("stream/webrtc/peer" FILES ${WOLF_STREAM_WEBRTC_PEER_SRC})
-source_group("stream/test" FILES ${WOLF_STREAM_QUIC_SRC})
 source_group("stream" FILES ${WOLF_STREAM_SRC})
 source_group("system/gamepad" FILES ${WOLF_SYSTEM_GAMEPAD_CLIENT_SRC} ${WOLF_SYSTEM_GAMEPAD_VIRTUAL_SRCS})
 source_group("system/log" FILES ${WOLF_SYSTEM_LOG_SRC})
