@@ -173,9 +173,9 @@ set(GETOPT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/system)
 # include cmakes
 include(cmake/vcpkg.cmake)
 include(cmake/system.cmake)
-# include(cmake/stream.cmake)
-# include(cmake/media.cmake)
-# include(cmake/ml.cmake)
+include(cmake/stream.cmake)
+include(cmake/media.cmake)
+include(cmake/ml.cmake)
 
 if (EMSCRIPTEN)
     message(WARNING "WOLF_TEST will be disabled for Emscripten")

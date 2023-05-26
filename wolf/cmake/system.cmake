@@ -17,33 +17,33 @@ if (WOLF_SYSTEM_MIMALLOC)
 endif()
 
 # fetch boost components via vcpkg
-# if (EMSCRIPTEN)
-#     vcpkg_install_force(
-#         boost-leaf 
-#         boost-signals2
-#     )
-# elseif(WOLF_SYSTEM_PYTHON)
-#     vcpkg_install_force(  
-#         boost-asio 
-#         boost-beast 
-#         boost-leaf 
-#         boost-python
-#         boost-signals2 
-#         boost-test
-#     )
-# else()
-#     vcpkg_install_force(  
-#         boost-asio 
-#         boost-beast 
-#         boost-leaf 
-#         boost-signals2 
-#         boost-test
-#     )
-# endif()
+if (EMSCRIPTEN)
+    vcpkg_install_force(
+        boost-leaf 
+        boost-signals2
+    )
+elseif(WOLF_SYSTEM_PYTHON)
+    vcpkg_install_force(  
+        boost-asio 
+        boost-beast 
+        boost-leaf 
+        boost-python
+        boost-signals2 
+        boost-test
+    )
+else()
+    vcpkg_install_force(  
+        boost-asio 
+        boost-beast 
+        boost-leaf 
+        boost-signals2 
+        boost-test
+    )
+endif()
 
-# set(Boost_INCLUDE_DIR $ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include CACHE STRING "boost include directory" FORCE)
-# list(APPEND INCLUDES ${Boost_INCLUDE_DIR})
-# find_package(Boost ${Boost_VERSION} REQUIRED)
+set(Boost_INCLUDE_DIR $ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include CACHE STRING "boost include directory" FORCE)
+list(APPEND INCLUDES ${Boost_INCLUDE_DIR})
+find_package(Boost ${Boost_VERSION} REQUIRED)
 
 # install gsl
 vcpkg_install(Microsoft.GSL ms-gsl FALSE)
