@@ -38,7 +38,6 @@ jobs:
         ./vcpkg/vcpkg integrate install
 
     - name: Set Android NDK
-      uses: actions/checkout@v2
       uses: nttld/setup-ndk@v1
       id: setup-ndk
       with:
