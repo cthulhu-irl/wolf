@@ -215,10 +215,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "" OR NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(STATUS "YESSS Debug mode ${CMAKE_BUILD_TYPE}")
     add_definitions(-DDEBUG)
 else()
-    message(STATUS "NOOOOOO debug mode ${CMAKE_BUILD_TYPE}")
     add_definitions(-DNDEBUG)
 endif()
 
