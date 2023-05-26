@@ -1,6 +1,5 @@
 # Wolf Engine [![Apache licensed](https://img.shields.io/badge/license-Apache-blue)](https://github.com/WolfEngine/wolf/blob/main/LICENSE.md) [![codecov](https://codecov.io/github/WolfEngine/wolf/branch/main/graph/badge.svg?token=AhoU9QV7eS)](https://codecov.io/github/WolfEngine/wolf) [![windows-x64-Microsoft C++ Code Analysis](https://github.com/WolfEngine/wolf/actions/workflows/msvc.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/msvc.yml) [![ubuntu-x64-CodeQL Analysis](https://github.com/WolfEngine/wolf/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/codeql.yml)
 
-
 <img src="https://raw.githubusercontent.com/WolfEngine/wolf/main/Logo.png" width="256" height="256" alt="wolf"/>
 <p><b>Welcome to the Wolf Engine source code.</b></p> 
 <p>The&nbsp;<b>Wolf Engine</b>&nbsp;is the next
