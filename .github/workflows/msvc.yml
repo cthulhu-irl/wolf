@@ -34,6 +34,10 @@ jobs:
           .\bootstrap-vcpkg.bat
           .\vcpkg integrate install
 
+      - name: Add vcpkg to environment variable
+        run: |
+          echo "VCPKG_ROOT=$(pwd)/vcpkg" >> $GITHUB_ENV
+
       - name: Get SW
         uses: egorpugin/sw-action@master
 
