@@ -25,45 +25,43 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Setup System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build pkg-config cmake
+    - name: Setup System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build pkg-config cmake
       
-      - name: Set up vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git
-          ./vcpkg/bootstrap-vcpkg.sh
-          ./vcpkg/vcpkg integrate install
+    - name: Set up vcpkg
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git
+        ./vcpkg/bootstrap-vcpkg.sh
+        ./vcpkg/vcpkg integrate install
 
-      - name: Setup JAVA
-      - uses: actions/setup-java@v1
-        with:
-          java-version: "11.x"
+    - name: Setup JAVA
+    - uses: actions/setup-java@v1
+      with:
+        java-version: "11.x"
+    - name: Configure Android SDK
+      env:
+        ANDROID_ROOT: /usr/local/lib/android
+        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      run: |
+        SDKMANAGER=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager
+        echo "y" | $SDKMANAGER "ndk;$NDK_VERSION"
 
-      - name: Configure Android SDK
-        env:
-          ANDROID_ROOT: /usr/local/lib/android
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: |
-          SDKMANAGER=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager
-          echo "y" | $SDKMANAGER "ndk;$NDK_VERSION"
+    - name: Configure Android NDK
+      env:
+        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      run: |
+        export ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/$NDK_VERSION
+        cmake -S . -B  --preset ${{matrix.config.preset}}
+    - name: Confihure Cmake
+      run: cmake -S . -B ${{ env.build }} --preset ${{matrix.config.preset}}
+    - name: Build CMake in Debug mode
+      run: cmake --build ${{ env.build }} --config Debug
 
-      - name: Configure Android NDK
-        env:
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: |
-          export ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/$NDK_VERSION
-          cmake -S . -B  --preset ${{matrix.config.preset}}
-
-      - name: Confihure Cmake
-        run: cmake -S . -B ${{ env.build }} --preset ${{matrix.config.preset}}
-
-      - name: Build CMake in Debug mode
-        run: cmake --build ${{ env.build }} --config Debug
-
-      - name: Build CMake in Release mode
-        run: cmake --build ${{ env.build }} --config Release
+    - name: Build CMake in Release mode
+      run: cmake --build ${{ env.build }} --config Release
         
