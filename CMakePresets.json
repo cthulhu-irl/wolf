@@ -56,7 +56,6 @@
             "name": "base-android",
             "hidden": true,
             "inherits": "base",
-            "generator": "Ninja",
             "cacheVariables": {
                 "ANDROID_ABI": "armeabi-v7a",
                 "ANDROID_NATIVE_API_LEVEL": "24",
