@@ -1,6 +1,6 @@
 /*
     Project: Wolf Engine. Copyright © 2014-2023 Pooya Eimandar
-    https://github.com/WolfEngine/wolf
+    https://github.com/WolfEngine/WolfEngine
 */
 
 #pragma once
@@ -9,7 +9,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "w_ocr_engine.hpp"
-#include "w_read_video_frames.hpp"
+#include "../w_read_video_frames.hpp"
 #include "wolf.hpp"
 
 namespace wolf::ml::ocr {
@@ -22,7 +22,7 @@ namespace wolf::ml::ocr {
    w_ocr_engine class for doing referee purposes.
 */
 class w_referee {
- public:
+public:
   //! The result_type enum shows the state of the result.
   /*!
           The result of the game would be stored in the database based on this
@@ -100,7 +100,7 @@ class w_referee {
     /*!<The ready variable shows the match result is applied.*/
     bool applied = false;
 
-   public:
+  public:
     /*!
       Release the memory.
 
@@ -116,7 +116,7 @@ class w_referee {
     */
   W_API w_referee();
 
- public:
+public:
   //! Contain the text and its repetition in the results.
   /*!
     The final result is extracted from a series of results. This struct contains
@@ -191,8 +191,8 @@ class w_referee {
           \param voted_results The voted results.
           \param all_results All results.
   */
-  W_API void voting_over_results_and_names(
-      frame_result_struct &voted_results,
-      std::vector<frame_result_struct> &all_results);
+  W_API void
+  voting_over_results_and_names(frame_result_struct &voted_results,
+                                std::vector<frame_result_struct> &all_results);
 };
-}  // namespace wolf::ml::ocr
+} // namespace wolf::ml::ocr

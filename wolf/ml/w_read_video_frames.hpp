@@ -1,6 +1,6 @@
 /*
     Project: Wolf Engine. Copyright © 2014-2023 Pooya Eimandar
-    https://github.com/WolfEngine/wolf
+    https://github.com/WolfEngine/WolfEngine
 */
 
 #pragma once
@@ -10,7 +10,7 @@
 
 #include "wolf.hpp"
 
-namespace wolf::ml::ocr {
+namespace wolf::ml {
 
 //! read frames of the video class.
 /*! \brief This class is responsible for reading the frame of the input
@@ -20,7 +20,7 @@ namespace wolf::ml::ocr {
    for reading the frames of the input video.
 */
 class w_read_video_frames {
- public:
+public:
   /*!<The path of the video.*/
   std::string path;
   /*!<Video Capture APIs.*/
@@ -78,5 +78,5 @@ class w_read_video_frames {
   The release function call cv::VideoCapture::release() function.
 */
   void release();
-};  // namespace wolf::ml::ocr
-}  // namespace wolf::ml::ocr
+}; // namespace wolf::ml::ocr
+} // namespace wolf::ml::ocr

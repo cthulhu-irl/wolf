@@ -16,7 +16,7 @@ nostd::shared_ptr<trace::Tracer> get_tracer() {
 } // namespace
 #endif
 
-using w_read_video_frames = wolf::ml::ocr::w_read_video_frames;
+using w_read_video_frames = wolf::ml::w_read_video_frames;
 
 w_read_video_frames::w_read_video_frames(std::string video_path) {
   path = video_path;

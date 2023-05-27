@@ -1,6 +1,6 @@
 /*
     Project: Wolf Engine. Copyright © 2014-2023 Pooya Eimandar
-    https://github.com/WolfEngine/wolf
+    https://github.com/WolfEngine/WolfEngine
 */
 
 #pragma once
@@ -28,7 +28,7 @@ namespace wolf::ml::ocr {
    the OCR class.
 */
 class w_ocr_engine {
- public:
+public:
   //! The enum shows the position of the cluster in the whole image.
   enum cluster_position { left, right, middle };
   //! The struct contains the features related to a cluster.
@@ -164,8 +164,9 @@ class w_ocr_engine {
           \param  ocr_config    The necessary configurations for processing
      optical characters. \return    returns the text of frame_box
   */
-  std::vector<character_and_center> image_to_string(
-      _In_ cv::Mat &frame_box, _In_ config_for_ocr_struct &ocr_config);
+  std::vector<character_and_center>
+  image_to_string(_In_ cv::Mat &frame_box,
+                  _In_ config_for_ocr_struct &ocr_config);
 
   /*!
           The check_if_overlapped checks the input rect of boxes to decide if
@@ -186,8 +187,8 @@ class w_ocr_engine {
           \param  contours    a vector contains contours.
           \return    a vector contains character structs
   */
-  std::vector<w_ocr_engine::characters_struct> contours_to_char_structs(
-      _In_ std::vector<std::vector<cv::Point>> contours);
+  std::vector<w_ocr_engine::characters_struct>
+  contours_to_char_structs(_In_ std::vector<std::vector<cv::Point>> contours);
 
   /*!
           The enchance_contour_image function modifies the background of the
@@ -243,9 +244,9 @@ class w_ocr_engine {
           \param  ocr_config   The necessary configurations for processing
      optical characters. \return    a vector of char structs.
   */
-  std::vector<characters_struct> filter_chars_by_contour_size(
-      _In_ std::vector<characters_struct> &character,
-      _In_ config_for_ocr_struct &ocr_config);
+  std::vector<characters_struct>
+  filter_chars_by_contour_size(_In_ std::vector<characters_struct> &character,
+                               _In_ config_for_ocr_struct &ocr_config);
 
   /*!
           the image_to_char_structs takes an image and returns a vector of char
@@ -255,8 +256,9 @@ class w_ocr_engine {
           \param  ocr_config   The necessary configurations for processing
      optical characters. \return    a vector of char structs.
   */
-  std::vector<characters_struct> image_to_char_structs(
-      _In_ cv::Mat &frame_box, _In_ config_for_ocr_struct &ocr_config);
+  std::vector<characters_struct>
+  image_to_char_structs(_In_ cv::Mat &frame_box,
+                        _In_ config_for_ocr_struct &ocr_config);
 
   /*!
           Takes vector of char structs and recognize text in each struct.
@@ -266,9 +268,10 @@ class w_ocr_engine {
           \param  ocr_config   The necessary configurations for processing
      optical characters. \return    a vector of char structs.
   */
-  std::vector<characters_struct> label_chars_in_char_structs(
-      _In_ std::vector<characters_struct> &characters, _In_ cv::Mat &frame_box,
-      _In_ config_for_ocr_struct &ocr_config);
+  std::vector<characters_struct>
+  label_chars_in_char_structs(_In_ std::vector<characters_struct> &characters,
+                              _In_ cv::Mat &frame_box,
+                              _In_ config_for_ocr_struct &ocr_config);
 
   /*!
           The margin_bounding_rect function margins the contours. It is
@@ -301,9 +304,9 @@ class w_ocr_engine {
           \param  ocr_config    The necessary configurations for processing
      optical characters.
   */
-  void merge_overlapped_contours(
-      _Inout_ std::vector<characters_struct> &bound_rect,
-      _In_ config_for_ocr_struct &ocr_config);
+  void
+  merge_overlapped_contours(_Inout_ std::vector<characters_struct> &bound_rect,
+                            _In_ config_for_ocr_struct &ocr_config);
 
   /*!
           The cluster_char_structs function puts related characters togethter.
@@ -311,9 +314,9 @@ class w_ocr_engine {
           \param  ocr_config    The necessary configurations for processing
      optical characters.
   */
-  std::vector<std::vector<characters_struct>> cluster_char_structs(
-      std::vector<w_ocr_engine::characters_struct> characters,
-      config_for_ocr_struct &ocr_config);
+  std::vector<std::vector<characters_struct>>
+  cluster_char_structs(std::vector<w_ocr_engine::characters_struct> characters,
+                       config_for_ocr_struct &ocr_config);
 
   /*!
           The function resizes the input image and maps it in the output image.
@@ -385,9 +388,10 @@ class w_ocr_engine {
           \param  pIndex    The index of the array in the vector.
           \return    An structure of the cluster features.
   */
-  auto fill_cluster_features(
-      _Inout_ std::vector<characters_struct> &pClusteredChar,
-      _In_ int pImageWidth, _In_ int pIndex) -> cluster_features;
+  auto
+  fill_cluster_features(_Inout_ std::vector<characters_struct> &pClusteredChar,
+                        _In_ int pImageWidth, _In_ int pIndex)
+      -> cluster_features;
 
   /*!
           The check_twin_clusters function checks the input cluster features and
@@ -420,8 +424,8 @@ class w_ocr_engine {
           \param  pClusteredChars    The cluster contains many characters.
           \return
   */
-  auto keep_time(
-      _Inout_ std::vector<std::vector<characters_struct>> &pClusteredChar)
+  auto
+  keep_time(_Inout_ std::vector<std::vector<characters_struct>> &pClusteredChar)
       -> void;
 
   /*!
@@ -435,10 +439,10 @@ class w_ocr_engine {
       _Inout_ cv::Mat &pImage,
       _In_ std::vector<characters_struct> &pClusteredChar) -> void;
 
- private:
+private:
   /*!<An object of tesseract library (to recognize digits)..*/
   tesseract::TessBaseAPI *digit_api = new tesseract::TessBaseAPI();
   /*!<An object of tesseract library (to recognize words).*/
   tesseract::TessBaseAPI *word_api = new tesseract::TessBaseAPI();
 };
-}  // namespace wolf::ml::ocr
+} // namespace wolf::ml::ocr
