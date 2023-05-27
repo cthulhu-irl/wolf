@@ -53,6 +53,16 @@
             }
         },
         {
+            "name": "wasm32-unknown-emscripten",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
+                "EMSCRIPTEN": true,
+                "LIBRARY_TYPE": "STATIC",
+                "VCPKG_TARGET_TRIPLET": "wasm32-emscripten"
+            }
+        },
+        {
             "name": "base-android",
             "hidden": true,
             "inherits": "base",
@@ -68,7 +78,6 @@
                 "CMAKE_ANDROID_NDK": "$env{ANDROID_NDK_HOME}",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_SYSTEM_NAME": "Android",
-                "CMAKE_TOOLCHAIN_FILE": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake",
                 "CPU": "arm",
                 "VCPKG_PLATFORM_TOOLSET": "clang"
             }
@@ -105,6 +114,12 @@
             "description": "Build wolf for Android armeabi-v7a arch as a shared library",
             "displayName": "android-arm-clang-shared",
             "name": "android-arm-clang-shared"
+        },
+        {
+            "configurePreset": "wasm32-unknown-emscripten",
+            "description": "Build wolf for Wasm as a static library",
+            "displayName": "wasm32-unknown-emscripten",
+            "name": "wasm32-unknown-emscripten"
         }
     ]
 }
