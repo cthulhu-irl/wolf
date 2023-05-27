@@ -1,4 +1,2 @@
 queries:
-  exclude-paths:
-    - './vcpkg'
-    - './vcpkg/packages'
+  exclude-paths: ['./vcpkg', './vcpkg/packages']
