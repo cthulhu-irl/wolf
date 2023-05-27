@@ -3,11 +3,13 @@ name: "ubuntu-x64-CodeQL Analysis"
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '/vcpkg/packages/**'
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "main" ]
-  paths-ignore:
-    - '/vcpkg/packages/**'
+    paths-ignore:
+      - '/vcpkg/packages/**'
 
 env:
   # Path to the CMake build directory.
