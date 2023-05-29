@@ -25,49 +25,53 @@ auto w_nud_det::nudity_detection(_In_ uint8_t* pImageData, _In_ const int pImage
     -> std::vector<float> {
   std::vector<float> result;
 
-  // // Put image in tensor
-  // std::vector<uint8_t>
-  // 	image_data;
-  // auto e = std::end(image_data);
-  // const int total = pImageWidth * pImageHeight * pImageChannels;
-  // image_data.insert(e, pImageData, pImageData + total);
+	torch::Tensor tensor_image = torch::from_blob(pImageData, {1, pImageHeight, pImageWidth, pImageChannels}, torch::kByte);
 
-  // auto input = cppflow::tensor(image_data, {pImageHeight, pImageWidth, pImageChannels});
-  // input = cppflow::cast(input, TF_UINT8, TF_FLOAT, false);
-  // input = input / 255.f;
-  // input = cppflow::expand_dims(input, 0, static_cast<cppflow::datatype>(3));
-  // auto output = _model(input);
+	std::vector<int> first_permute = get_env_vector_of_int("NUDITY_DETECTION_MODEL_FIRST_PERMUTE");
 
-  // result = output.get_data<float>();
+	tensor_image = tensor_image.permute({first_permute[0], first_permute[1], first_permute[2], first_permute[3]});
+	tensor_image = tensor_image.toType(torch::kFloat);
+	tensor_image = tensor_image.div(255);
 
-  torch::Tensor tensor_image =
-      torch::from_blob(pImageData, {1, pImageHeight, pImageWidth, pImageChannels}, torch::kByte);
+	// Define normalization constants
+	const float kNormalizationMean[] = {0.485f, 0.456f, 0.406f};
+	const float kNormalizationStd[] = {0.229f, 0.224f, 0.225f};
 
-  tensor_image = tensor_image.permute({0, 3, 1, 2});
-  tensor_image = tensor_image.toType(torch::kFloat);
-  tensor_image = tensor_image.div(255);
+	// Create the normalization transform
+	auto normalization_transform = torch::data::transforms::Normalize<float>(
+		{kNormalizationMean[0], kNormalizationMean[1], kNormalizationMean[2]},
+		{kNormalizationStd[0], kNormalizationStd[1], kNormalizationStd[2]});
 
-  // Define normalization constants
-  const float kNormalizationMean[] = {0.485f, 0.456f, 0.406f};
-  const float kNormalizationStd[] = {0.229f, 0.224f, 0.225f};
+	// Apply normalization transform to the image tensor
+	tensor_image = normalization_transform(tensor_image);
 
-  // Create the normalization transform
-  auto normalization_transform = torch::data::transforms::Normalize<float>(
-      {kNormalizationMean[0], kNormalizationMean[1], kNormalizationMean[2]},
-      {kNormalizationStd[0], kNormalizationStd[1], kNormalizationStd[2]});
+	std::vector<int> second_permute = get_env_vector_of_int("NUDITY_DETECTION_MODEL_SECOND_PERMUTE");
 
-  // Apply normalization transform to the image tensor
-  tensor_image = normalization_transform(tensor_image);
+	tensor_image = tensor_image.permute({second_permute[0], second_permute[1], second_permute[2], second_permute[3]});
 
-  tensor_image = tensor_image.to(torch::kCUDA);
+	tensor_image = tensor_image.to(torch::kCUDA);
 
-  torch::Tensor output;
+	auto output = _model.forward({tensor_image});
 
-  output = _model.forward({tensor_image}).toTensor();
+	at::Tensor output_tensor;
 
-  for (int i = 0; i < output.sizes()[1]; i++) {
-    result.push_back(output[0][i].item<float>());
-  }
+	if(output.isTensor())
+	{
+		output_tensor = output.toTensor();
+	}
+	else
+	{
+		// get the vector of tensors from the output IValue
+		std::vector<at::Tensor> tensor_vector = output.toTensorVector();
+
+		// extract the first tensor from the vector
+		output_tensor = tensor_vector[1];
+	}
+
+	for (int i = 0; i < output_tensor.sizes()[1]; i++)
+	{
+		result.push_back(output_tensor[0][i].item<float>());
+	}
 
   return result;
 }

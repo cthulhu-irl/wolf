@@ -12,10 +12,14 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
+#ifdef WOLF_ML_OCR
 #include "referee_ocr/w_referee.hpp"
+#endif // WOLF_ML_OCR
 #include "wolf.hpp"
 
+#ifdef WOLF_ML_OCR
 using w_referee = wolf::ml::ocr::w_referee;
+#endif // WOLF_ML_OCR
 
 namespace wolf::ml {
 
@@ -102,6 +106,7 @@ W_API bool replace_string(std::string &str, const std::string &from,
 */
 W_API bool string_2_boolean(std::string pVariable);
 
+#ifdef WOLF_ML_OCR
 /*!
         The function gets a string as input, the string contains numbers of int
    numbers separated by spaces and split them and return them in a vector of
@@ -117,12 +122,6 @@ W_API auto store_image_in_folder(
     _In_ std::string pOutputImageFolderPath, _In_ std::string pVideoPath)
     -> void;
 
-W_API void write_in_file_append(std::string file_path, std::string content);
-
-W_API void write_in_file(std::string file_path, std::string content);
-W_API std::vector<std::string> split_string(std::string input_string,
-                                            char reference);
-
 /*!
         The function stores the video output text result in the pOutputTextPath
    file path.
@@ -134,6 +133,13 @@ W_API std::vector<std::string> split_string(std::string input_string,
 W_API auto write_results_in_file(
     _In_ std::vector<w_referee::match_result_struct> &pVideoResult,
     _In_ std::string pOutputTextPath) -> void;
+#endif // WOLF_ML_OCR
+
+W_API void write_in_file_append(std::string file_path, std::string content);
+
+W_API void write_in_file(std::string file_path, std::string content);
+W_API std::vector<std::string> split_string(std::string input_string,
+                                            char reference);
 
 /*!
         The function reads all lines of the input file and returns them in a
@@ -207,6 +213,15 @@ W_API auto get_env_string(_In_ const char *pKey) -> std::string;
         \return The value of the variable in cv::Rect.
 */
 W_API auto get_env_cv_rect(_In_ const char *pKey) -> cv::Rect;
+
+/*!
+	The function return the value of an environment variable based on the input key.
+
+	\param pKey The path of the .env file.
+	\return the value of the variable in vector<int>.
+*/
+W_API auto get_env_vector_of_int(
+	_In_ const char* pKey) -> std::vector<int>;
 
 /*!
         The function returns the related root path compared to the current path.

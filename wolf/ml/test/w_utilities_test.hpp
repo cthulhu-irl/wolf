@@ -304,6 +304,20 @@ BOOST_AUTO_TEST_CASE(get_env_cv_rect_function) {
   BOOST_TEST(value.height == 14);
 }
 
+BOOST_AUTO_TEST_CASE(get_env_vector_of_int) {
+  fs::path dot_env_file_path = utilities_asset_path / ".get_env_vector_of_int";
+
+  set_env(dot_env_file_path.string().c_str());
+
+  std::string key = "NUDITY_DETECTION_MODEL_PERMUTE";
+  std::vector<int> value = get_env_cv_rect(key.c_str());
+
+  BOOST_TEST(value[0] == 0);
+  BOOST_TEST(value[1] == 3);
+  BOOST_TEST(value[2] == 1);
+  BOOST_TEST(value[3] == 2);
+}
+
 BOOST_AUTO_TEST_CASE(get_relative_path_to_root_function) {
   std::string temp = get_relative_path_to_root();
 
