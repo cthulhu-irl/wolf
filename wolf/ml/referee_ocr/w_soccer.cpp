@@ -8,7 +8,7 @@
 #include <string>
 
 #include "w_referee.hpp"
-#include "w_utilities.hpp"
+#include "../w_utilities.hpp"
 
 using w_soccer = wolf::ml::ocr::w_soccer;
 using w_ocr_engine = wolf::ml::ocr::w_ocr_engine;

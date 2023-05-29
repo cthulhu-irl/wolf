@@ -14,14 +14,15 @@
 #include <opencv2/opencv.hpp>
 
 #include <ml/referee_ocr/w_ocr_engine.hpp>
-#include <ml/referee_ocr/w_read_video_frames.hpp>
+#include <ml/w_read_video_frames.hpp>
 #include <ml/referee_ocr/w_referee.hpp>
-#include <ml/referee_ocr/w_utilities.hpp>
+#include <ml/w_utilities.hpp>
 
 namespace fs = std::filesystem;
 fs::path soccer_asset_path = "../wolf/ml/test/common_test_asset/soccer";
 
 using namespace wolf::ml::ocr;
+using namespace wolf::ml;
 
 BOOST_AUTO_TEST_CASE(set_config_function) {
   fs::path env_file_path = soccer_asset_path / ".set_config";

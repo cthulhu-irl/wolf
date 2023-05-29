@@ -1,6 +1,6 @@
 /*
     Project: Wolf Engine. Copyright © 2014-2023 Pooya Eimandar
-    https://github.com/WolfEngine/wolf
+    https://github.com/WolfEngine/WolfEngine
 */
 
 #pragma once
@@ -12,10 +12,12 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-#include "w_referee.hpp"
+#include "referee_ocr/w_referee.hpp"
 #include "wolf.hpp"
 
-namespace wolf::ml::ocr {
+using w_referee = wolf::ml::ocr::w_referee;
+
+namespace wolf::ml {
 
 /*!
         The get_nearest_string returns the nearest string to input among strings
@@ -64,8 +66,8 @@ W_API std::string get_value_from_json_file_by_key(std::string pJsonFilePath,
         \param pVariable string of integers number.
         \return a vector of integers.
 */
-W_API std::vector<int> line_of_numbers_in_string_to_vector_of_integers(
-    std::string pVariable);
+W_API std::vector<int>
+line_of_numbers_in_string_to_vector_of_integers(std::string pVariable);
 
 /*!
         compute the normalized similarity between input strings using the
@@ -223,4 +225,4 @@ W_API auto get_relative_path_to_root() -> std::string;
 */
 W_API auto get_first_character_of_string(_In_ std::string pStr,
                                          _In_ bool pEscape) -> std::string;
-}  // namespace wolf::ml::ocr
+} // namespace wolf::ml::ocr

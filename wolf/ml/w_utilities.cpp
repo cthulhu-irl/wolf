@@ -38,7 +38,7 @@ nostd::shared_ptr<trace::Tracer> get_tracer() {
 } // namespace
 #endif
 
-namespace wolf::ml::ocr {
+namespace wolf::ml {
 
 auto get_nearest_string(_In_ std::string pInput, std::string pFilePath)
     -> std::string {

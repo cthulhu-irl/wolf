@@ -5,7 +5,7 @@
 #include <torch/script.h>
 #include <torch/torch.h>
 
-#include "../w_common.hpp"
+#include "../w_utilities.hpp"
 #include <opencv2/opencv.hpp>
 
 using w_nud_det = wolf::ml::nudet::w_nud_det;
