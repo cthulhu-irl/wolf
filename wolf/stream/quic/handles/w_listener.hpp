@@ -5,6 +5,7 @@
 #include "stream/quic/datatypes/w_alpn.hpp"
 #include "stream/quic/events/w_listener_event.hpp"
 #include "stream/quic/handles/w_registration.hpp"
+#include "stream/quic/w_quic_context.hpp"
 
 #include <boost/leaf.hpp>
 #include <msquic.h>
@@ -29,6 +30,7 @@ private:
 
     struct context_bundle {
         callback_type callback;
+        w_quic_context api_context;
         std::atomic<bool> running = false;
         std::atomic<int> refcount = 0;
         bool closed = false; // to avoid double free in reentrancy of close() in callback.
@@ -48,12 +50,14 @@ public:
     w_listener(const w_listener&) = delete;
     w_listener(w_listener&& p_other) noexcept
         : _handle(std::exchange(p_other._handle, nullptr))
+        , _api(std::move(p_other._api))
     {}
 
     w_listener& operator=(const w_listener&) = delete;
     w_listener& operator=(w_listener&& p_other) noexcept
     {
         std::swap(_handle, p_other._handle);
+        std::swap(_api, p_other._api);
         return *this;
     }
 
@@ -70,18 +74,26 @@ public:
     [[nodiscard]] bool is_running() const noexcept;
 
     /**
-     * @brief open/create a listener.
-     * @param p_reg       registration (execution context).
-     * @param p_callback  listener callback.
-     * @return a listener instance on success.
+     * @brief open/create a listener using a default context.
      */
-    [[nodiscard]] static auto open(w_registration& p_reg, callback_type p_callback) noexcept
+    [[nodiscard]] static auto open(w_registration& p_reg,
+                                   callback_type p_callback) noexcept
+        -> boost::leaf::result<w_listener>
+    {
+        BOOST_LEAF_AUTO(context, w_quic_context::make());
+        return open(std::move(context), p_reg, std::move(p_callback));
+    }
+
+    /**
+     * @brief open/create a listener.
+     */
+    [[nodiscard]] static auto open(w_quic_context p_context,
+                                   w_registration& p_reg,
+                                   callback_type p_callback) noexcept
         -> boost::leaf::result<w_listener>;
 
     /**
      * @brief set callback.
-     * @param p_callback  listener callback.
-     * @return success or failure.
      */
     auto set_callback(callback_type p_callback) -> boost::leaf::result<void>;
 
@@ -89,7 +101,6 @@ public:
      * @brief start to listen.
      * @param p_address  address and port to listen on.
      * @param p_alpn     application-layer protocol negotiation.
-     * @return
      */
     w_status start(const w_address& p_address, w_alpn_view p_alpn);
 
@@ -112,9 +123,12 @@ private:
     auto raw() noexcept { return _handle; }
     auto raw() const noexcept { return _handle; }
 
-    explicit w_listener(internal::w_raw_tag, HQUIC p_handle) noexcept;
+    explicit w_listener(internal::w_raw_tag,
+                        HQUIC p_handle,
+                        std::shared_ptr<const QUIC_API_TABLE> p_api) noexcept;
 
     HQUIC _handle = nullptr;
+    std::shared_ptr<const QUIC_API_TABLE> _api{};
 };
 
 }  // namespace wolf::stream::quic

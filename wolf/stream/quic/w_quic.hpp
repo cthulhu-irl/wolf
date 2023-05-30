@@ -25,5 +25,6 @@
 #include "stream/quic/handles/w_registration.hpp"
 #include "stream/quic/handles/w_stream.hpp"
 
+#include "stream/quic/w_quic_context.hpp"
 #include "stream/quic/w_quic_server.hpp"
 #include "stream/quic/w_quic_client.hpp"

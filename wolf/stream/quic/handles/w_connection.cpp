@@ -1,6 +1,5 @@
 #include "stream/quic/handles/w_connection.hpp"
 #include "stream/quic/events/w_connection_event.hpp"
-#include "stream/quic/internal/w_msquic_api.hpp"
 
 // NOTE: this header must be included after msquic.h
 //       or there would be a redefinition error.
@@ -18,7 +17,7 @@ QUIC_STATUS w_connection::internal_raw_callback(HQUIC p_connection_raw,
 
     auto context = static_cast<context_bundle*>(p_context_raw);
 
-    auto connection = w_connection(internal::w_raw_tag{}, p_connection_raw);
+    auto connection = w_connection(internal::w_raw_tag{}, p_connection_raw, context->api_table);
     auto event = internal::w_raw_access::from_raw<w_connection_event>(p_event_raw);
 
     w_status status = context->callback(connection, event);
@@ -38,17 +37,18 @@ bool w_connection::is_running() const noexcept
         return false;
     }
 
-    auto api = internal::w_msquic_api::api();
-    auto context = static_cast<context_bundle*>(api->GetContext(_handle));
+    auto context = static_cast<context_bundle*>(_api->GetContext(_handle));
     return context->running;
 }
 
-auto w_connection::open(w_registration& p_reg, callback_type p_callback) noexcept
+auto w_connection::open(w_quic_context p_context,
+                        w_registration& p_reg,
+                        callback_type p_callback) noexcept
     -> boost::leaf::result<w_connection>
 {
     HQUIC handle = nullptr;
 
-    auto api = internal::w_msquic_api::api();
+    auto api = internal::w_raw_access::raw(p_context);
 
     auto reg_raw = internal::w_raw_access::raw(p_reg);
     if (!reg_raw) {
@@ -74,7 +74,9 @@ auto w_connection::open(w_registration& p_reg, callback_type p_callback) noexcep
                          wolf::format("couldn't open/create connection: {}", status_to_str(status)));
     }
 
-    return w_connection(internal::w_raw_tag{}, handle);
+    context_ptr->api_table = api;
+
+    return w_connection(internal::w_raw_tag{}, handle, std::move(api));
 }
 
 auto w_connection::set_callback(callback_type p_callback) -> boost::leaf::result<void>
@@ -84,9 +86,7 @@ auto w_connection::set_callback(callback_type p_callback) -> boost::leaf::result
                          "connection is closed/destroyed.");
     }
 
-    auto api = internal::w_msquic_api::api();
-
-    auto context = static_cast<context_bundle*>(api->GetContext(_handle));
+    auto context = static_cast<context_bundle*>(_api->GetContext(_handle));
 
     if (!context) {
         return W_FAILURE(std::errc::operation_canceled,
@@ -109,16 +109,14 @@ w_status w_connection::start(w_configuration& p_config, const char* p_host, std:
         return w_status_code::InvalidState;
     }
 
-    auto api = internal::w_msquic_api::api();
-
-    context_bundle* context = static_cast<context_bundle*>(api->GetContext(_handle));
+    context_bundle* context = static_cast<context_bundle*>(_api->GetContext(_handle));
     if (!context || context->closing || context->running) {
         return w_status_code::InvalidState;
     }
 
     auto config_raw = internal::w_raw_access::raw(p_config);
 
-    w_status status = api->ConnectionStart(
+    w_status status = _api->ConnectionStart(
         _handle,
         config_raw,
         QUIC_ADDRESS_FAMILY_UNSPEC,
@@ -145,16 +143,14 @@ void w_connection::shutdown(wolf::w_flags<w_connection_shutdown_flag> p_flags,
         return;
     }
 
-    auto api = internal::w_msquic_api::api();
-
-    auto context = static_cast<context_bundle*>(api->GetContext(_handle));
+    auto context = static_cast<context_bundle*>(_api->GetContext(_handle));
     if (!context || !context->running) {
         return;
     }
 
     const auto flags = static_cast<QUIC_CONNECTION_SHUTDOWN_FLAGS>(p_flags.to_underlying());
 
-    api->ConnectionShutdown(_handle, flags, p_error_code);
+    _api->ConnectionShutdown(_handle, flags, p_error_code);
 }
 
 void w_connection::close()
@@ -163,9 +159,7 @@ void w_connection::close()
         return;
     }
 
-    auto api = internal::w_msquic_api::api();
-
-    auto context = static_cast<context_bundle*>(api->GetContext(_handle));
+    auto context = static_cast<context_bundle*>(_api->GetContext(_handle));
     if (!context || context->closing) {
         return;
     }
@@ -178,21 +172,23 @@ void w_connection::close()
     // it wouldn't result in reentrancy in msquic api.
     context->closing = true;
 
-    api->ConnectionClose(_handle);
+    _api->ConnectionClose(_handle);
     _handle = nullptr;
     delete context;
 }
 
-auto w_connection::setup_new_raw_connection(HQUIC p_conn_raw,
+auto w_connection::setup_new_raw_connection(w_quic_context p_context,
+                                            HQUIC p_conn_raw,
                                             w_configuration& p_config,
                                             callback_type p_callback) noexcept
     -> boost::leaf::result<w_connection>
 {
-    auto api = internal::w_msquic_api::api();
     auto config_raw = internal::w_raw_access::raw(p_config);
     if (!config_raw) {
         return W_FAILURE(std::errc::invalid_argument, "given config is closed or invalid.");
     }
+
+    auto api = internal::w_raw_access::raw(p_context);
 
     w_status status = api->ConnectionSetConfiguration(p_conn_raw, config_raw);
     if (status.failed()) {
@@ -213,17 +209,20 @@ auto w_connection::setup_new_raw_connection(HQUIC p_conn_raw,
         context_ptr
     );
 
+    context_ptr->api_table = api;
     context_ptr->running = true;
     ++context_ptr->refcount;
 
-    return w_connection(internal::w_raw_tag{}, p_conn_raw);
+    return w_connection(internal::w_raw_tag{}, p_conn_raw, std::move(api));
 }
 
-w_connection::w_connection(internal::w_raw_tag, HQUIC p_handle) noexcept
+w_connection::w_connection(internal::w_raw_tag,
+                           HQUIC p_handle,
+                           std::shared_ptr<const QUIC_API_TABLE> p_api) noexcept
     : _handle(p_handle)
+    , _api(std::move(p_api))
 {
-    auto api = internal::w_msquic_api::api();
-    auto context = static_cast<context_bundle*>(api->GetContext(p_handle));
+    auto context = static_cast<context_bundle*>(_api->GetContext(p_handle));
     ++context->refcount;
 }
 

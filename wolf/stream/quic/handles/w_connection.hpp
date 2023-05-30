@@ -33,6 +33,7 @@ private:
 
     struct context_bundle {
         callback_type callback;
+        std::shared_ptr<const QUIC_API_TABLE> api_table;
         std::atomic<bool> running = false;
         std::atomic<int> refcount = 0;
         bool closing = false; // to avoid double free in reentrancy of close() in callback.
@@ -52,12 +53,14 @@ public:
     w_connection(const w_connection&) = delete;
     w_connection(w_connection&& p_other) noexcept
         : _handle(std::exchange(p_other._handle, nullptr))
+        , _api(std::move(p_other._api))
     {}
 
     w_connection& operator=(const w_connection&) = delete;
     w_connection& operator=(w_connection&& p_other) noexcept
     {
         std::swap(_handle, p_other._handle);
+        std::swap(_api, p_other._api);
         return *this;
     }
 
@@ -75,26 +78,19 @@ public:
 
     /**
      * @brief open/create a connection.
-     * @param p_reg       registration (execution context).
-     * @param p_callback  connection callback.
-     * @return a connection instance on success.
      */
-    [[nodiscard]] static auto open(w_registration& p_reg, callback_type p_callback) noexcept
+    [[nodiscard]] static auto open(w_quic_context p_context,
+                                   w_registration& p_reg,
+                                   callback_type p_callback) noexcept
         -> boost::leaf::result<w_connection>;
 
     /**
      * @brief set callback.
-     * @param p_callback  connection callback.
-     * @return success or failure.
      */
     auto set_callback(callback_type p_callback) -> boost::leaf::result<void>;
 
     /**
      * @brief start the connection to connect.
-     * @param p_config  the configuration to use for connection.
-     * @param p_host    the host to connect to.
-     * @param p_alpn    the port to connect to.
-     * @return status of success or failure.
      */
     w_status start(w_configuration& p_config, const char* p_host, std::uint16_t p_port);
 
@@ -117,12 +113,9 @@ public:
 private:
     /**
      * @brief setup the new raw connection created by msquic.
-     * @param p_conn_raw  raw connection handle.
-     * @param p_config    configuration to associate with.
-     * @param p_callback  event handler callback.
-     * @return status of whether succeeded or not.
      */
-    [[nodiscard]] static auto setup_new_raw_connection(HQUIC p_conn_raw,
+    [[nodiscard]] static auto setup_new_raw_connection(w_quic_context p_context,
+                                                       HQUIC p_conn_raw,
                                                        w_configuration& p_config,
                                                        callback_type p_callback) noexcept
         -> boost::leaf::result<w_connection>;
@@ -140,9 +133,12 @@ private:
     auto raw() noexcept { return _handle; }
     auto raw() const noexcept { return _handle; }
 
-    explicit w_connection(internal::w_raw_tag, HQUIC p_handle) noexcept;
+    explicit w_connection(internal::w_raw_tag,
+                          HQUIC p_handle,
+                          std::shared_ptr<const QUIC_API_TABLE> p_api) noexcept;
 
     HQUIC _handle = nullptr;
+    std::shared_ptr<const QUIC_API_TABLE> _api{};
 };
 
 }  // namespace wolf::stream::quic

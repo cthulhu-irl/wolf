@@ -1,16 +1,17 @@
 #include "stream/quic/handles/w_registration.hpp"
 
-#include "stream/quic/internal/w_msquic_api.hpp"
 #include "stream/quic/datatypes/w_status.hpp"
+#include "stream/quic/w_quic_context.hpp"
 
 #include "wolf.hpp"
 
 namespace wolf::stream::quic {
 
-auto w_registration::open() noexcept -> boost::leaf::result<w_registration>
+auto w_registration::open(w_quic_context p_context) noexcept
+    -> boost::leaf::result<w_registration>
 {
     HQUIC handle;
-    auto api = internal::w_msquic_api::api();
+    auto api = internal::w_raw_access::raw(p_context);
 
     w_status status = api->RegistrationOpen(nullptr, &handle);
     if (status.failed()) {
@@ -18,14 +19,14 @@ auto w_registration::open() noexcept -> boost::leaf::result<w_registration>
                          wolf::format("couldn't open/create registration: {}", status_to_str(status)));
     }
 
-    return w_registration(internal::w_raw_tag{}, handle);
+    return w_registration(internal::w_raw_tag{}, handle, std::move(api));
 }
 
-auto w_registration::open(const w_registration_config& p_config) noexcept
+auto w_registration::open(w_quic_context p_context, const w_registration_config& p_config) noexcept
     -> boost::leaf::result<w_registration>
 {
     HQUIC handle;
-    auto api = internal::w_msquic_api::api();
+    auto api = internal::w_raw_access::raw(p_context);
 
     auto config_raw = internal::w_raw_access::raw(p_config);
 
@@ -35,7 +36,7 @@ auto w_registration::open(const w_registration_config& p_config) noexcept
                          wolf::format("couldn't open/create registration: {}", status_to_str(status)));
     }
 
-    return w_registration(internal::w_raw_tag{}, handle);
+    return w_registration(internal::w_raw_tag{}, handle, std::move(api));
 }
 
 void w_registration::shutdown(wolf::w_flags<w_connection_shutdown_flag> p_flags,
@@ -45,9 +46,8 @@ void w_registration::shutdown(wolf::w_flags<w_connection_shutdown_flag> p_flags,
         return;
     }
 
-    auto api = internal::w_msquic_api::api();
     auto flags = static_cast<QUIC_CONNECTION_SHUTDOWN_FLAGS>(p_flags.to_underlying());
-    api->RegistrationShutdown(_handle, flags, p_error_code);
+    _api->RegistrationShutdown(_handle, flags, p_error_code);
 }
 
 void w_registration::close()
@@ -56,8 +56,7 @@ void w_registration::close()
         return;
     }
 
-    auto api = internal::w_msquic_api::api();
-    api->RegistrationClose(_handle);
+    _api->RegistrationClose(_handle);
     _handle = nullptr;
 }
 

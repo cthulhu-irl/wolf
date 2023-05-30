@@ -45,6 +45,9 @@ public:
 
     ~w_quic_client() { stop(); }
 
+    [[nodiscard]] auto& context() noexcept { return _context; }
+    [[nodiscard]] const auto& context() const noexcept { return _context; }
+
     [[nodiscard]] auto& configuration() noexcept { return _configuration; }
     [[nodiscard]] const auto& configuration() const noexcept { return _configuration; }
 
@@ -61,7 +64,9 @@ public:
     {
         w_quic_client ret;
 
-        BOOST_LEAF_ASSIGN(ret._registration, quic::w_registration::open(p_client_config.reg_config));
+        BOOST_LEAF_ASSIGN(ret._context, w_quic_context::make());
+
+        BOOST_LEAF_ASSIGN(ret._registration, w_registration::open(ret._context, p_client_config.reg_config));
 
         auto cred_config = quic::w_credential_config(
             quic::w_certificate_none(),
@@ -69,7 +74,8 @@ public:
             | quic::w_credential_flag::NoCertificationValidation
         );
 
-        BOOST_LEAF_ASSIGN(ret._configuration, quic::w_configuration::open(
+        BOOST_LEAF_ASSIGN(ret._configuration, w_configuration::open(
+            ret._context,
             ret._registration,
             p_client_config.settings,
             quic::as_alpn_view(p_client_config.alpn),
@@ -92,7 +98,7 @@ public:
             return W_FAILURE(std::errc::operation_in_progress, "already running.");
         }
 
-        BOOST_LEAF_ASSIGN(_connection, quic::w_connection::open(_registration, std::move(p_connection_cb)));
+        BOOST_LEAF_ASSIGN(_connection, quic::w_connection::open(_context, _registration, std::move(p_connection_cb)));
 
         quic::w_status status = _connection.start(_configuration, p_host, p_port);
         if (status.failed()) {
@@ -121,6 +127,7 @@ private:
 
     std::string _alpn;
 
+    w_quic_context _context;
     w_registration _registration;
     w_configuration _configuration;
     w_connection _connection;

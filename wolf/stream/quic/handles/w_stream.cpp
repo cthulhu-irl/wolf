@@ -1,6 +1,5 @@
 #include "stream/quic/handles/w_stream.hpp"
 
-#include "stream/quic/internal/w_msquic_api.hpp"
 #include "stream/quic/events/w_stream_event.hpp"
 
 #include "wolf.hpp"
@@ -17,7 +16,7 @@ QUIC_STATUS w_stream::internal_raw_callback(HQUIC stream_raw,
 
     auto context = static_cast<context_bundle*>(context_raw);
 
-    auto stream = w_stream(internal::w_raw_tag{}, stream_raw);
+    auto stream = w_stream(internal::w_raw_tag{}, stream_raw, context->api_table);
     auto event = internal::w_raw_access::from_raw<w_stream_event>(event_raw);
 
     w_status status = context->callback(stream, event);
@@ -43,19 +42,19 @@ bool w_stream::is_running() const noexcept
         return false;
     }
 
-    auto api = internal::w_msquic_api::api();
-    auto context = static_cast<context_bundle*>(api->GetContext(_handle));
+    auto context = static_cast<context_bundle*>(_api->GetContext(_handle));
     return context->running;
 }
 
-auto w_stream::open(w_connection& p_conn,
+auto w_stream::open(w_quic_context p_context,
+                    w_connection& p_conn,
                     callback_type p_callback,
                     wolf::w_flags<w_stream_open_flag> p_flags) noexcept
     -> boost::leaf::result<w_stream>
 {
     HQUIC handle = nullptr;
 
-    auto api = internal::w_msquic_api::api();
+    auto api = internal::w_raw_access::raw(p_context);
 
     auto conn_raw = internal::w_raw_access::raw(p_conn);
     if (!conn_raw) {
@@ -80,7 +79,9 @@ auto w_stream::open(w_connection& p_conn,
                          wolf::format("couldn't open/create stream: {}", status_to_str(status)));
     }
 
-    return w_stream(internal::w_raw_tag{}, handle);
+    context_ptr->api_table = api;
+
+    return w_stream(internal::w_raw_tag{}, handle, std::move(api));
 }
 
 auto w_stream::set_callback(callback_type p_callback) -> boost::leaf::result<void>
@@ -89,9 +90,7 @@ auto w_stream::set_callback(callback_type p_callback) -> boost::leaf::result<voi
         return W_FAILURE(std::errc::operation_canceled, "stream is closed/destroyed.");
     }
 
-    auto api = internal::w_msquic_api::api();
-
-    auto context = static_cast<context_bundle*>(api->GetContext(_handle));
+    auto context = static_cast<context_bundle*>(_api->GetContext(_handle));
 
     if (!context) {
         return W_FAILURE(std::errc::operation_canceled, "stream is in invalid state.");
@@ -113,9 +112,7 @@ w_status w_stream::start(wolf::w_flags<w_stream_start_flag> p_flags)
         return w_status_code::InvalidState;
     }
 
-    auto api = internal::w_msquic_api::api();
-
-    auto context = static_cast<context_bundle*>(api->GetContext(_handle));
+    auto context = static_cast<context_bundle*>(_api->GetContext(_handle));
     if (!context) {
         return w_status_code::InternalError;
     }
@@ -124,7 +121,7 @@ w_status w_stream::start(wolf::w_flags<w_stream_start_flag> p_flags)
         return w_status_code::InvalidState;
     }
 
-    w_status status = api->StreamStart(
+    w_status status = _api->StreamStart(
         _handle,
         static_cast<QUIC_STREAM_START_FLAGS>(p_flags.to_underlying())
     );
@@ -151,8 +148,6 @@ w_status w_stream::send(std::span<uint8_t> p_buffer, wolf::w_flags<w_send_flag> 
         return w_status_code::InvalidState;
     }
 
-    auto api = internal::w_msquic_api::api();
-
     // on successful send, the allocated buffer must be
     // dealloacted in event handler callback by context pointer.
     auto buf_ptr = new QUIC_BUFFER{
@@ -162,7 +157,7 @@ w_status w_stream::send(std::span<uint8_t> p_buffer, wolf::w_flags<w_send_flag> 
 
     const auto flags = static_cast<QUIC_SEND_FLAGS>(p_flags.to_underlying());
 
-    w_status status = api->StreamSend(_handle, buf_ptr, 1, flags, buf_ptr);
+    w_status status = _api->StreamSend(_handle, buf_ptr, 1, flags, buf_ptr);
     if (status.failed()) {
         delete buf_ptr;
         return status;
@@ -177,16 +172,14 @@ void w_stream::shutdown(wolf::w_flags<w_stream_shutdown_flag> p_flags, size_t p_
         return;
     }
 
-    auto api = internal::w_msquic_api::api();
-
-    auto context = static_cast<context_bundle*>(api->GetContext(_handle));
+    auto context = static_cast<context_bundle*>(_api->GetContext(_handle));
     if (!context || !context->running) {
         return;
     }
 
     const auto flags = static_cast<QUIC_STREAM_SHUTDOWN_FLAGS>(p_flags.to_underlying());
 
-    api->StreamShutdown(_handle, flags, p_error_code);
+    _api->StreamShutdown(_handle, flags, p_error_code);
 }
 
 void w_stream::close()
@@ -195,9 +188,7 @@ void w_stream::close()
         return;
     }
 
-    auto api = internal::w_msquic_api::api();
-
-    auto context = static_cast<context_bundle*>(api->GetContext(_handle));
+    auto context = static_cast<context_bundle*>(_api->GetContext(_handle));
     if (!context || context->closed) {
         return;
     }
@@ -210,15 +201,15 @@ void w_stream::close()
     // it wouldn't result in reentrancy in msquic api.
     context->closed = true;
 
-    api->StreamClose(_handle);
+    _api->StreamClose(_handle);
     _handle = nullptr;
     delete context;
 }
 
-auto w_stream::setup_new_raw_stream(HQUIC p_stream_raw, callback_type p_callback) noexcept
+auto w_stream::setup_new_raw_stream(w_quic_context p_context, HQUIC p_stream_raw, callback_type p_callback) noexcept
     -> boost::leaf::result<w_stream>
 {
-    auto api = internal::w_msquic_api::api();
+    auto api = internal::w_raw_access::raw(p_context);
 
     auto [context_ptr, callback_ptr] = make_context_callback_ptrs(std::move(p_callback));
     if (!context_ptr) {
@@ -232,19 +223,20 @@ auto w_stream::setup_new_raw_stream(HQUIC p_stream_raw, callback_type p_callback
         context_ptr
     );
 
+    context_ptr->api_table = api;
     // since it's already running, sets it as running
     // and also adds a refcount for callback.
     context_ptr->running = true;
     ++context_ptr->refcount;
 
-    return w_stream(internal::w_raw_tag{}, p_stream_raw);
+    return w_stream(internal::w_raw_tag{}, p_stream_raw, std::move(api));
 }
 
-w_stream::w_stream(internal::w_raw_tag, HQUIC p_handle) noexcept
+w_stream::w_stream(internal::w_raw_tag, HQUIC p_handle, std::shared_ptr<const QUIC_API_TABLE> p_api) noexcept
     : _handle(p_handle)
+    , _api(std::move(p_api))
 {
-    auto api = internal::w_msquic_api::api();
-    auto context = static_cast<context_bundle*>(api->GetContext(p_handle));
+    auto context = static_cast<context_bundle*>(_api->GetContext(p_handle));
     ++context->refcount;
 }
 

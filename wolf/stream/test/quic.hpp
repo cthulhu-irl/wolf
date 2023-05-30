@@ -11,6 +11,8 @@
 namespace quic = wolf::stream::quic;
 
 BOOST_AUTO_TEST_CASE(msquic_base_types) {
+    wolf::system::w_leak_detector _;
+
     BOOST_REQUIRE(quic::w_status(quic::w_status_code::Success).succeeded());
     BOOST_REQUIRE(quic::w_status(quic::w_status_code::Aborted).failed());
 
@@ -22,6 +24,8 @@ BOOST_AUTO_TEST_CASE(msquic_base_types) {
 }
 
 BOOST_AUTO_TEST_CASE(msquic_server_client) {
+    wolf::system::w_leak_detector _;
+
     boost::leaf::try_handle_all(
         []() -> boost::leaf::result<void> {
             std::uint8_t cert_hash[20] = {
@@ -83,7 +87,9 @@ BOOST_AUTO_TEST_CASE(msquic_server_client) {
                             BOOST_REQUIRE(status.succeeded());
                         } else {
                             p_ev.accept_stream(server_stream_cb);
-                            auto sender_stream = quic::w_stream::open(p_conn,
+                            auto sender_stream = quic::w_stream::open(
+                                                    server.context(),
+                                                    p_conn,
                                                     server_stream_cb,
                                                     quic::w_stream_open_flag::Unidirectional);
                             BOOST_REQUIRE(sender_stream);
@@ -154,7 +160,9 @@ BOOST_AUTO_TEST_CASE(msquic_server_client) {
                 std::cout << " [quic-client] connection callback: event: " << p_event.name() << std::endl;
                 return p_event.visit(wolf::w_overloaded{
                     [&](const quic::w_connection_event_connected&) {
-                        auto stream = quic::w_stream::open(p_conn,
+                        auto stream = quic::w_stream::open(
+                                             client.context(),
+                                             p_conn,
                                              client_stream_cb,
                                              quic::w_stream_open_flag::Unidirectional);
                         BOOST_REQUIRE(stream);

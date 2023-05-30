@@ -2,7 +2,6 @@
 
 #include "system/w_flags.hpp"
 #include "stream/quic/internal/common.hpp"
-#include "stream/quic/internal/w_msquic_api.hpp"
 #include "stream/quic/datatypes/common_flags.hpp"
 #include "stream/quic/datatypes/w_status.hpp"
 #include "stream/quic/handles/w_stream.hpp"
@@ -189,8 +188,15 @@ public:
             return;
         }
 
-        internal::w_msquic_api::api()->StreamClose(_event->PEER_STREAM_STARTED.Stream);
+        const QUIC_API_TABLE* api = nullptr;
+        if (QUIC_FAILED(MsQuicOpen2(&api))) {
+            return;
+        }
+
+        api->StreamClose(_event->PEER_STREAM_STARTED.Stream);
         _event->PEER_STREAM_STARTED.Stream = nullptr;  // to avoid Use-After-Free.
+
+        MsQuicClose(api);
     }
 
     /**
@@ -206,7 +212,10 @@ public:
                              "stream is already accepted/rejected.");
         }
 
+        BOOST_LEAF_AUTO(context, w_quic_context::make());
+
         BOOST_LEAF_AUTO(stream, w_stream::setup_new_raw_stream(
+            std::move(context),
             _event->PEER_STREAM_STARTED.Stream,
             std::forward<HandlerF>(p_callback)
         ));

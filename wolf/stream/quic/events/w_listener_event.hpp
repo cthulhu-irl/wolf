@@ -1,7 +1,6 @@
 #pragma once
 
 #include "stream/quic/internal/common.hpp"
-#include "stream/quic/internal/w_msquic_api.hpp"
 #include "stream/quic/datatypes/w_new_connection_info.hpp"
 #include "stream/quic/handles/w_connection.hpp"
 
@@ -56,16 +55,19 @@ public:
             return;
         }
 
-        internal::w_msquic_api::api()->ConnectionClose(_event->NEW_CONNECTION.Connection);
+        const QUIC_API_TABLE* api = nullptr;
+        if (QUIC_FAILED(MsQuicOpen2(&api))) {
+            return;
+        }
+
+        api->ConnectionClose(_event->NEW_CONNECTION.Connection);
         _event->NEW_CONNECTION.Connection = nullptr;  // to avoid Use-After-Free.
+
+        MsQuicClose(api);
     }
 
     /**
      * @brief accept and setup the new connection handle.
-     *
-     * @param p_config    configuration to set.
-     * @param p_callback  event handler callback.
-     * @return success or error.
      */
     auto accept_connection(w_configuration& p_config, w_connection::callback_type p_callback) noexcept
         -> boost::leaf::result<w_connection>
@@ -75,7 +77,10 @@ public:
                              "connection is already accepted or rejected.");
         }
 
+        BOOST_LEAF_AUTO(context, w_quic_context::make());
+
         BOOST_LEAF_AUTO(conn, w_connection::setup_new_raw_connection(
+            std::move(context),
             _event->NEW_CONNECTION.Connection,
             p_config,
             std::move(p_callback)

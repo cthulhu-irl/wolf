@@ -3,6 +3,7 @@
 #include "stream/quic/internal/common.hpp"
 #include "stream/quic/datatypes/common_flags.hpp"
 #include "stream/quic/datatypes/w_registration_config.hpp"
+#include "stream/quic/w_quic_context.hpp"
 #include "system/w_flags.hpp"
 
 #include <boost/leaf.hpp>
@@ -36,12 +37,14 @@ public:
     w_registration(const w_registration&) = delete;
     w_registration(w_registration&& p_other) noexcept
         : _handle(std::exchange(p_other._handle, nullptr))
+        , _api(std::move(p_other._api))
     {}
 
     w_registration& operator=(const w_registration&) = delete;
     w_registration& operator=(w_registration&& p_other) noexcept
     {
         std::swap(_handle, p_other._handle);
+        std::swap(_api, p_other._api);
         return *this;
     }
 
@@ -55,13 +58,15 @@ public:
     /**
      * @brief open/create a regisration with default registration config.
      */
-    [[nodiscard]] static auto open() noexcept -> boost::leaf::result<w_registration>;
+    [[nodiscard]] static auto open(w_quic_context p_context) noexcept
+        -> boost::leaf::result<w_registration>;
 
     /**
      * @brief open/create a registration with given registration config.
      * @param p_config registration configuration.
      */
-    [[nodiscard]] static auto open(const w_registration_config& p_config) noexcept
+    [[nodiscard]] static auto open(w_quic_context p_context,
+                                   const w_registration_config& p_config) noexcept
         -> boost::leaf::result<w_registration>;
 
     /**
@@ -83,11 +88,15 @@ private:
     auto raw() noexcept { return _handle; }
     auto raw() const noexcept { return _handle; }
 
-    explicit w_registration(internal::w_raw_tag, HQUIC p_handle) noexcept
+    explicit w_registration(internal::w_raw_tag,
+                            HQUIC p_handle,
+                            std::shared_ptr<const QUIC_API_TABLE> p_api) noexcept
         : _handle(p_handle)
+        , _api(std::move(p_api))
     {}
 
     HQUIC _handle = nullptr;
+    std::shared_ptr<const QUIC_API_TABLE> _api{};
 };
 
 }  // namespace wolf::stream::quic
