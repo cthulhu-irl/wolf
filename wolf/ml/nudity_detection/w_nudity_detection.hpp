@@ -31,9 +31,13 @@ class w_nud_det {
   ~w_nud_det();
 
   /*!
-  The function gets a string as input and return the boolean representation of the input.
+  The nudity_detection function accepts image information as input and returns a float vector 
+  containing the model result.
 
-          \param pVariable the string input.
+          \param pImageData the spacial image pixel data.
+          \param pImageWidth the image width.
+          \param pImageHeight the image height.
+          \param pImageChannels the number of image channels.
           \return a vector of float numbers each between 0 to 1 that shows the nudity factors.
   */
   W_API auto nudity_detection(_In_ uint8_t* pImageData, _In_ int pImageWidth, _In_ int pImageHeight,

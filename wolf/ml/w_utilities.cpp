@@ -247,6 +247,7 @@ bool string_2_boolean(std::string pVariable) {
   return result;
 }
 
+#ifdef WOLF_ML_OCR
 auto store_image_in_folder(
     _In_ std::vector<w_referee::match_result_struct> &pVideoResult,
     _In_ std::string pOutputImageFolderPath, _In_ std::string pVideoPath)
@@ -266,38 +267,6 @@ auto store_image_in_folder(
     pVideoResult[i].release();
   }
 
-  return;
-}
-
-void write_in_file_append(std::string file_path, std::string content) {
-#ifdef __TELEMETRY
-  auto scoped_span =
-      trace::Scope(get_tracer()->StartSpan("write_in_file_append"));
-  // auto scoped_span = get_tracer()->StartSpan("write_in_file_append");
-#endif
-
-  std::ofstream file;
-
-  file.open(file_path, std::ios_base::app); // append instead of overwrite
-  file << content << std::endl;
-
-  file.close();
-  return;
-}
-
-void write_in_file(std::string file_path, std::string content) {
-#ifdef __TELEMETRY
-  auto scoped_span =
-      trace::Scope(get_tracer()->StartSpan("write_in_file_append"));
-  // auto scoped_span = get_tracer()->StartSpan("write_in_file_append");
-#endif
-
-  std::ofstream file;
-
-  file.open(file_path); // overwrite
-  file << content << std::endl;
-
-  file.close();
   return;
 }
 
@@ -330,6 +299,39 @@ auto write_results_in_file(
     }
   }
 
+  return;
+}
+#endif // WOLF_ML_OCR
+
+void write_in_file_append(std::string file_path, std::string content) {
+#ifdef __TELEMETRY
+  auto scoped_span =
+      trace::Scope(get_tracer()->StartSpan("write_in_file_append"));
+  // auto scoped_span = get_tracer()->StartSpan("write_in_file_append");
+#endif
+
+  std::ofstream file;
+
+  file.open(file_path, std::ios_base::app); // append instead of overwrite
+  file << content << std::endl;
+
+  file.close();
+  return;
+}
+
+void write_in_file(std::string file_path, std::string content) {
+#ifdef __TELEMETRY
+  auto scoped_span =
+      trace::Scope(get_tracer()->StartSpan("write_in_file_append"));
+  // auto scoped_span = get_tracer()->StartSpan("write_in_file_append");
+#endif
+
+  std::ofstream file;
+
+  file.open(file_path); // overwrite
+  file << content << std::endl;
+
+  file.close();
   return;
 }
 
@@ -429,6 +431,23 @@ auto get_env_cv_rect(_In_ const char *pKey) -> cv::Rect {
   }
 
   return value;
+}
+
+auto get_env_vector_of_int(
+	_In_ const char* pKey) -> std::vector<int>
+{
+	std::vector<int> int_vector ={};
+	if (const char* env_p = getenv(pKey))
+	{
+		std::string temp(env_p);
+		int_vector = line_of_numbers_in_string_to_vector_of_integers(temp);
+	}
+	else
+	{
+		// TODO add log
+	}
+
+	return int_vector;
 }
 
 auto get_relative_path_to_root() -> std::string {
