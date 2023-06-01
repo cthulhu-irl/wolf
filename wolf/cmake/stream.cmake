@@ -101,6 +101,8 @@ if (WOLF_STREAM_QUIC)
     file(GLOB_RECURSE WOLF_STREAM_QUIC_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic_context.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic_context.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic_client.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic_client.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/w_quic_server.cpp"

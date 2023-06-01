@@ -1,18 +1,17 @@
 #include "stream/quic/handles/w_configuration.hpp"
 
-#include "stream/quic/internal/w_msquic_api.hpp"
-
 #include "wolf.hpp"
 
 namespace wolf::stream::quic {
 
-auto w_configuration::open(w_registration& p_reg,
+auto w_configuration::open(w_quic_context p_context,
+                           w_registration& p_reg,
                            const w_settings& p_settings,
                            w_alpn_view p_alpn) noexcept
     -> boost::leaf::result<w_configuration>
 {
     HQUIC handle = nullptr;
-    auto api = internal::w_msquic_api::api();
+    auto api = internal::w_raw_access::raw(p_context);
 
     auto reg_raw = internal::w_raw_access::raw(p_reg);
     if (!reg_raw) {
@@ -37,16 +36,17 @@ auto w_configuration::open(w_registration& p_reg,
             wolf::format("couldn't open configuration: {}", status_to_str(status)));
     }
 
-    return w_configuration(internal::w_raw_tag{}, handle);
+    return w_configuration(internal::w_raw_tag{}, handle, std::move(api));
 }
 
-auto w_configuration::open(w_registration& p_reg,
+auto w_configuration::open(w_quic_context p_context,
+                           w_registration& p_reg,
                            const w_settings& p_settings,
                            w_alpn_view p_alpn,
                            const w_credential_config& p_cred_conf) noexcept
     -> boost::leaf::result<w_configuration>
 {
-    BOOST_LEAF_AUTO(ret, open(p_reg, p_settings, p_alpn));
+    BOOST_LEAF_AUTO(ret, open(std::move(p_context), p_reg, p_settings, p_alpn));
     auto status = ret.load_credential(p_cred_conf);
     if (status.failed()) {
         return W_FAILURE(std::errc::operation_canceled,
@@ -55,15 +55,14 @@ auto w_configuration::open(w_registration& p_reg,
     return ret;
 }
 
-w_status wolf::stream::quic::w_configuration::load_credential(const w_credential_config& p_creds_config)
+w_status w_configuration::load_credential(const w_credential_config& p_creds_config)
 {
     if (!_handle) {
         return w_status_code::InvalidState;
     }
 
-    auto api = internal::w_msquic_api::api();
     auto creds_config_raw = internal::w_raw_access::raw(p_creds_config);
-    return api->ConfigurationLoadCredential(_handle, creds_config_raw);
+    return _api->ConfigurationLoadCredential(_handle, creds_config_raw);
 }
 
 void w_configuration::close()
@@ -72,8 +71,7 @@ void w_configuration::close()
         return;
     }
 
-    auto api = internal::w_msquic_api::api();
-    api->ConfigurationClose(_handle);
+    _api->ConfigurationClose(_handle);
     _handle = nullptr;
 }
 

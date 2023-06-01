@@ -12,6 +12,8 @@ So make sure dependent handles **DO NOT** outlive their dependencies. hopefully 
 
 To understand these dependencies please refer to `API` overview documenetation of msquic: https://github.com/microsoft/msquic/blob/main/docs/API.md
 
+The msquic api table is kept inside `w_quic_context`.
+
 ## Base Data Types
 
 Msquic enums/flags have an equivalent enum classes to be used. for bit flags, `w_flags` is used to handle bitwise operations.
@@ -73,8 +75,6 @@ Wolf doesn't provide the `context` pointer concept of msquic to user of this lib
 
 ## For Developer/Contributor (Internals)
 
-Msquic's api table is created only once and is provided by singleton-style factory method `internal::w_msquic_api::api`.
-
 As a C wrapper library there are many scenarios which one C function/type requires another C instance, and for this reason `internal::w_raw_access` pattern is used. classes which wrap a raw/C type declare that as `freind` class and provide desired private api so in any other part in the library if raw access is required, it can be gained via `internal::w_raw_access` can be used and these two types/methods need not to know of each other (necessary for generics). saving us tons of forward declarations and maintenance bookkeepings.
 
-Handles are kept lightweight, only have the `HQUIC` pointer as data member, and all of their required shared data is allocated on heap (the type `context_bundle`) and saved in the handle's context. so the context pointer must never change/written and should be always read for concurrency safety.
+Handles are kept lightweight, only have the `HQUIC` pointer and `api` table as data members, and all of their required shared data is allocated on heap (the type `context_bundle`) and saved in the handle's context. so the context pointer must never change/written and should be always read for concurrency safety.

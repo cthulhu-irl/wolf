@@ -31,6 +31,7 @@ private:
 
     struct context_bundle {
         callback_type callback;
+        std::shared_ptr<const QUIC_API_TABLE> api_table;
         std::atomic<bool> running = false;
         std::atomic<int> refcount = 0;
         bool closed = false; // to avoid double free in reentrancy of close() in callback.
@@ -50,12 +51,14 @@ public:
     w_stream(const w_stream&) = delete;
     w_stream(w_stream&& p_other) noexcept
         : _handle(std::exchange(p_other._handle, nullptr))
+        , _api(std::move(p_other._api))
     {}
 
     w_stream& operator=(const w_stream&) = delete;
     w_stream& operator=(w_stream&& p_other) noexcept
     {
         std::swap(_handle, p_other._handle);
+        std::swap(_api, p_other._api);
         return *this;
     }
 
@@ -73,43 +76,31 @@ public:
 
     /**
      * @brief open/create a stream on a connection.
-     * @param p_conn      connection to open the stream on.
-     * @param p_callback  stream event handler callback.
-     * @return a connection instance on success.
      */
-    [[nodiscard]] static auto open(w_connection& p_conn,
+    [[nodiscard]] static auto open(w_quic_context p_context,
+                                   w_connection& p_conn,
                                    callback_type p_callback,
                                    wolf::w_flags<w_stream_open_flag> p_flags = w_stream_open_flag::None) noexcept
         -> boost::leaf::result<w_stream>;
 
     /**
      * @brief set callback.
-     * @param p_callback  event handler callback.
-     * @return success or failure.
      */
     auto set_callback(callback_type p_callback) -> boost::leaf::result<void>;
 
     /**
      * @brief start the stream.
-     * @param p_flags  flags to control the behavior of starting stream.
-     * @return status of success or failure.
      */
     w_status start(wolf::w_flags<w_stream_start_flag> p_flags = w_stream_start_flag::None);
 
     /**
-     * @brief send one or more buffers into stream.
-     * @param p_str    string to send.
-     * @param p_flags  flags to control the behavior of send.
-     * @return a status inidicating success or failure.
+     * @brief send one or more string buffers into stream.
      */
     w_status send(std::string_view p_str,
                   wolf::w_flags<w_send_flag> p_flags = w_send_flag::None);
 
     /**
      * @brief send one or more buffers into stream.
-     * @param p_buffer  contiguous buffer to send.
-     * @param p_flags   flags to control the behavior of send.
-     * @return a status inidicating success or failure.
      */
     w_status send(std::span<std::uint8_t> p_buffer,
                   wolf::w_flags<w_send_flag> p_flags = w_send_flag::None);
@@ -132,12 +123,10 @@ public:
 private:
     /**
      * @brief setup the new raw stream created by msquic.
-     * @param p_conn_raw  raw stream handle.
-     * @param p_config    configuration to associate with.
-     * @param p_callback  event handler callback.
-     * @return status of whether succeeded or not.
      */
-    [[nodiscard]] static auto setup_new_raw_stream(HQUIC p_stream_raw, callback_type p_callback) noexcept
+    [[nodiscard]] static auto setup_new_raw_stream(w_quic_context p_context,
+                                                   HQUIC p_stream_raw,
+                                                   callback_type p_callback) noexcept
         -> boost::leaf::result<w_stream>;
 
     template <typename HandlerF>
@@ -153,9 +142,10 @@ private:
     auto raw() noexcept { return _handle; }
     auto raw() const noexcept { return _handle; }
 
-    explicit w_stream(internal::w_raw_tag, HQUIC p_handle) noexcept;
+    explicit w_stream(internal::w_raw_tag, HQUIC p_handle, std::shared_ptr<const QUIC_API_TABLE>) noexcept;
 
     HQUIC _handle = nullptr;
+    std::shared_ptr<const QUIC_API_TABLE> _api;
 };
 
 }  // namespace wolf::stream::quic

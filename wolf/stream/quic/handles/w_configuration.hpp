@@ -24,7 +24,7 @@ namespace wolf::stream::quic {
  *       or you might face deadlocks.
  */
 class W_API w_configuration {
-    friend internal::w_raw_access;
+    friend class internal::w_raw_access;
 
 public:
     /**
@@ -36,12 +36,14 @@ public:
     w_configuration(const w_configuration&) = delete;
     w_configuration(w_configuration&& p_other) noexcept
         : _handle(std::exchange(p_other._handle, nullptr))
+        , _api(std::move(p_other._api))
     {}
 
     w_configuration& operator=(const w_configuration&) = delete;
     w_configuration& operator=(w_configuration&& p_other) noexcept
     {
         std::swap(_handle, p_other._handle);
+        std::swap(_api, p_other._api);
         return *this;
     }
 
@@ -54,12 +56,9 @@ public:
 
     /**
      * @brief open/create a configuration with given registration, settings and alpn.
-     * @param p_reg      registration handle.
-     * @param p_settings single configuration settings.
-     * @param p_alpn     single application-layer protocol negotiation.
-     * @return an instance of w_configuration on success, otherwise error.
      */
-    [[nodiscard]] static auto open(w_registration& p_reg,
+    [[nodiscard]] static auto open(w_quic_context p_context,
+                                   w_registration& p_reg,
                                    const w_settings& p_settings,
                                    w_alpn_view p_alpn) noexcept
         -> boost::leaf::result<w_configuration>;
@@ -67,13 +66,9 @@ public:
     /**
      * @brief open/create a configuration with given registration, settings,
      *        alpn and credential config.
-     * @param p_reg         registration handle.
-     * @param p_settings    single configuration settings.
-     * @param p_alpn        single application-layer protocol negotiation.
-     * @param p_cred_config credential config.
-     * @return an instance of w_configuration on success, otherwise error.
      */
-    [[nodiscard]] static auto open(w_registration& p_reg,
+    [[nodiscard]] static auto open(w_quic_context p_context,
+                                   w_registration& p_reg,
                                    const w_settings& p_settings,
                                    w_alpn_view p_alpn,
                                    const w_credential_config& p_cred_conf) noexcept
@@ -95,11 +90,15 @@ private:
     auto raw() noexcept { return _handle; }
     auto raw() const noexcept { return _handle; }
 
-    explicit w_configuration(internal::w_raw_tag, HQUIC p_handle) noexcept
+    explicit w_configuration(internal::w_raw_tag,
+                             HQUIC p_handle,
+                             std::shared_ptr<const QUIC_API_TABLE> p_api) noexcept
         : _handle(p_handle)
+        , _api(std::move(p_api))
     {}
 
     HQUIC _handle = nullptr;
+    std::shared_ptr<const QUIC_API_TABLE> _api{};
 };
 
 }  // namespace wolf::stream::quic

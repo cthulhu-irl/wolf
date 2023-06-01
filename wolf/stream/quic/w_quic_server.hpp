@@ -8,6 +8,7 @@
 #include "stream/quic/handles/w_configuration.hpp"
 #include "stream/quic/handles/w_registration.hpp"
 #include "stream/quic/handles/w_listener.hpp"
+#include "stream/quic/w_quic_context.hpp"
 
 #include "wolf.hpp"
 
@@ -42,6 +43,9 @@ public:
 
     ~w_quic_server() { stop(); }
 
+    [[nodiscard]] auto& context() noexcept { return _context; }
+    [[nodiscard]] const auto& context() const noexcept { return _context; }
+
     [[nodiscard]] auto& configuration() noexcept { return _configuration; }
     [[nodiscard]] const auto& configuration() const noexcept { return _configuration; }
 
@@ -58,9 +62,13 @@ public:
     {
         auto ret = w_quic_server();
 
-        BOOST_LEAF_ASSIGN(ret._registration, w_registration::open(p_server_config.reg_config));
+        BOOST_LEAF_ASSIGN(ret._context, w_quic_context::make());
+
+        BOOST_LEAF_ASSIGN(ret._registration, w_registration::open(
+                              ret._context, p_server_config.reg_config));
 
         BOOST_LEAF_ASSIGN(ret._configuration, w_configuration::open(
+            ret._context,
             ret._registration,
             p_server_config.settings,
             as_alpn_view(p_server_config.alpn),
@@ -83,7 +91,7 @@ public:
             stop();
         }
 
-        BOOST_LEAF_ASSIGN(_listener, w_listener::open(_registration, std::move(p_listener_cb)));
+        BOOST_LEAF_ASSIGN(_listener, w_listener::open(_context, _registration, std::move(p_listener_cb)));
 
         auto address = w_address(w_address_family::Unspecified, p_port);
 
@@ -112,11 +120,12 @@ public:
 private:
     w_quic_server() {}
 
-    std::string _alpn;
-
+    w_quic_context _context;
     w_registration _registration;
     w_configuration _configuration;
     w_listener _listener;
+
+    std::string _alpn;
 };
 
 }  // namespace wolf::stream::quic
