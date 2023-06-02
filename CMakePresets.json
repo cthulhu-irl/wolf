@@ -67,7 +67,6 @@
             "hidden": true,
             "inherits": "base",
             "cacheVariables": {
-                "ANDROID_ARM_NEON": "ON",
                 "ANDROID_NATIVE_API_LEVEL": "24",
                 "ANDROID_NDK": "$env{ANDROID_NDK_HOME}",
                 "ANDROID_PLATFORM": "android-24",
