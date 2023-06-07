@@ -58,31 +58,17 @@ if (WOLF_STREAM_QUIC)
         message(FATAL_ERROR "WOLF_STREAM_QUIC is not supported for wasm32 target")
     endif()
 
-    if (NOT WIN32)
-        message(FATAL_ERROR "WOLF_STREAM_QUIC feature is not avilable on non-windows yet.")
-    endif()
-
     file(GLOB_RECURSE WOLF_STREAM_QUIC_SRCS
       "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/*"
     )
 
-    if (WIN32 OR WIN64)
-        FetchContent_Declare(
-            msquic
-            URL https://github.com/microsoft/msquic/releases/download/v2.2.0/msquic_windows_x64_Release_schannel.zip
-            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-        )
-        FetchContent_Populate(msquic)
-    else()
-        message(FATAL_ERROR "WOLF_STREAM_QUIC feature is not supported on target platform.")
-    endif()
-
-    add_library(msquic-lib INTERFACE)
-    add_library(msquic::msquic ALIAS msquic-lib)
-    target_include_directories(msquic-lib INTERFACE ${msquic_SOURCE_DIR}/include)
-    target_link_directories(msquic-lib INTERFACE BEFORE ${msquic_SOURCE_DIR}/bin)
-    target_link_directories(msquic-lib INTERFACE BEFORE ${msquic_SOURCE_DIR}/lib)
-    target_link_libraries(msquic-lib INTERFACE msquic)
+    FetchContent_Declare(
+        msquic
+        GIT_REPOSITORY https://github.com/WolfEngine/wolf-deps
+        GIT_TAG        main
+        SOURCE_SUBDIR  msquic
+    )
+    FetchContent_MakeAvailable(msquic)
 
     list(APPEND LIBS msquic::msquic)
 

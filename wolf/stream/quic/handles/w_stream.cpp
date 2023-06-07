@@ -219,7 +219,7 @@ auto w_stream::setup_new_raw_stream(w_quic_context p_context, HQUIC p_stream_raw
 
     api->SetCallbackHandler(
         p_stream_raw,
-        (QUIC_STREAM_CALLBACK_HANDLER)callback_ptr,
+        (void*)callback_ptr,
         context_ptr
     );
 
