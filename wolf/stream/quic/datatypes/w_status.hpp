@@ -56,7 +56,7 @@ inline const char* status_to_str(QUIC_STATUS p_status)
 /**
  * @brief equivalent of QUIC_STATUS.
  */
-enum class w_status_code {
+enum class w_status_code : std::size_t {
     Success                   = QUIC_STATUS_SUCCESS,
     Pending                   = QUIC_STATUS_PENDING,
     Continue                  = QUIC_STATUS_CONTINUE,

@@ -8,7 +8,7 @@
 #include <msquic.h>
 
 #include <span>
-#include <ranges>
+#include <vector>
 
 namespace wolf::stream::quic {
 
@@ -76,10 +76,17 @@ public:
 
     [[nodiscard]] auto buffers() const noexcept
     {
-        return std::span(_event->RECEIVE.Buffers, _event->RECEIVE.BufferCount)
-             | std::ranges::views::transform([](const QUIC_BUFFER& buf) {
-                 return std::span(buf.Buffer, buf.Length);
-               });
+        auto converted_buffers = std::vector<std::span<std::uint8_t>>{};
+        converted_buffers.reserve(_event->RECEIVE.BufferCount);
+
+        std::transform(
+            _event->RECEIVE.Buffers,
+            _event->RECEIVE.Buffers + _event->RECEIVE.BufferCount,
+            std::back_inserter(converted_buffers),
+            [](const QUIC_BUFFER& buf) { return std::span(buf.Buffer, buf.Length); }
+        );
+
+        return converted_buffers;
     }
 
     [[nodiscard]] wolf::w_flags<w_receive_flag> flags() const noexcept

@@ -205,7 +205,7 @@ auto w_connection::setup_new_raw_connection(w_quic_context p_context,
 
     api->SetCallbackHandler(
         p_conn_raw,
-        (QUIC_CONNECTION_CALLBACK_HANDLER)callback_ptr,
+        (void*)callback_ptr,
         context_ptr
     );
 
