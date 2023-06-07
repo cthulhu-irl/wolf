@@ -2,19 +2,16 @@
     Project: Wolf Engine. Copyright © 2014-2023 Pooya Eimandar
     https://github.com/WolfEngine/wolf
 */
+#if !defined(ANDROID) && !defined(EMSCRIPTEN)
 
 #pragma once
 
 #include <wolf/wolf.hpp>
-#ifndef EMSCRIPTEN
 #include <boost/asio.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 using namespace boost::asio::experimental::awaitable_operators;
-#endif
 
 namespace wolf::system {
-
-#ifndef EMSCRIPTEN
 
 class w_timer : public boost::asio::high_resolution_timer {
  public:
@@ -28,6 +25,6 @@ class w_time {
       _In_ const std::chrono::steady_clock::time_point& p_deadline) noexcept;
 };
 
-#endif
-
 }  // namespace wolf::system
+
+#endif

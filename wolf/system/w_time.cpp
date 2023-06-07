@@ -1,3 +1,5 @@
+#if !defined(ANDROID) && !defined(EMSCRIPTEN)
+
 #include "w_time.hpp"
 
 using w_time = wolf::system::w_time;
@@ -20,3 +22,5 @@ boost::asio::awaitable<std::errc> w_time::timeout(
   }
   co_return std::errc::timed_out;
 }
+
+#endif
