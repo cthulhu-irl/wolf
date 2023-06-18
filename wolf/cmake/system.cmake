@@ -231,8 +231,7 @@ if (WOLF_SYSTEM_ZLIB)
 endif()
 
 if (WOLF_SYSTEM_POSTGRESQL)
-    vcpkg_install(libpq libpq TRUE)
-    list(APPEND LIBS libpq::libpq)
+    vcpkg_install(PostgreSQL libpq FALSE)
 
     file(GLOB_RECURSE WOLF_SYSTEM_POSTGRESQL_SRC
         "${CMAKE_CURRENT_SOURCE_DIR}/system/db/w_postgresql.cpp"
@@ -280,73 +279,73 @@ endif()
 
 if (WOLF_SYSTEM_REDIS)
     if (ANDROID)
-        message(WARNING "WOLF_SYSTEM_REDIS is not supported for Android")
+        message(FATAL "WOLF_SYSTEM_REDIS is not supported for Android")
     elseif(EMSCRIPTEN)
-        message(WARNING "WOLF_SYSTEM_REDIS is not supported for the wasm32 target on Emscripten")
-    else()
-        if (NOT WOLF_SYSTEM_OPENSSL)
-            message(FATAL "WOLF_SYSTEM_REDIS requires WOLF_SYSTEM_OPENSSL")
-        endif()
-
-        vcpkg_install_force(
-            boost-json 
-        )
-        message("fetching https://github.com/boostorg/redis.git")
-    
-        FetchContent_Declare(
-            boost_redis
-            GIT_REPOSITORY https://github.com/boostorg/redis.git
-            GIT_TAG        develop
-        )
-        
-        set(FETCHCONTENT_QUIET OFF)
-        FetchContent_MakeAvailable(boost_redis)
-
-        list(APPEND INCLUDES ${boost_redis_SOURCE_DIR}/include) 
-        
-        file(GLOB_RECURSE WOLF_SYSTEM_REDIS_SRC
-            "${CMAKE_CURRENT_SOURCE_DIR}/system/db/w_redis_client.cpp"
-            "${CMAKE_CURRENT_SOURCE_DIR}/system/db/w_redis_client.hpp"
-        )
-
-        list(APPEND SRCS 
-            ${WOLF_SYSTEM_REDIS_SRC}
-        )
-
-        set_target_properties(
-            boost_redis_src
-            coverage
-            cpp17_intro
-            cpp17_intro_sync
-            cpp20_containers
-            cpp20_echo_server
-            cpp20_intro
-            cpp20_intro_tls
-            cpp20_json
-            cpp20_resolve_with_sentinel
-            cpp20_streams
-            cpp20_subscriber
-            doc
-            echo_server_client
-            echo_server_direct
-            test_conn_echo_stress
-            test_conn_exec
-            test_conn_exec_cancel
-            test_conn_exec_cancel2
-            test_conn_exec_error
-            test_conn_exec_retry
-            test_conn_push
-            test_conn_quit
-            test_conn_reconnect
-            test_conn_run_cancel
-            test_conn_tls
-            test_issue_50
-            test_low_level
-            test_low_level_async
-            test_request
-            PROPERTIES FOLDER "boost-redis") 
-
+        message(FATAL "WOLF_SYSTEM_REDIS is not supported for the wasm32 target on Emscripten")
     endif()
+
+    if (NOT WOLF_SYSTEM_OPENSSL)
+        message(FATAL "WOLF_SYSTEM_REDIS requires WOLF_SYSTEM_OPENSSL")
+    endif()
+
+    vcpkg_install_force(
+        boost-json
+    )
+    message("fetching https://github.com/boostorg/redis.git")
+    
+    FetchContent_Declare(
+        boost_redis
+        GIT_REPOSITORY https://github.com/boostorg/redis.git
+        GIT_TAG        develop
+    )
+
+    set(FETCHCONTENT_QUIET OFF)
+    FetchContent_MakeAvailable(boost_redis)
+
+    list(APPEND INCLUDES ${boost_redis_SOURCE_DIR}/include)
+
+    file(GLOB_RECURSE WOLF_SYSTEM_REDIS_SRC
+        "${CMAKE_CURRENT_SOURCE_DIR}/system/db/w_redis_client.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/system/db/w_redis_client.hpp"
+    )
+
+    list(APPEND SRCS
+        ${WOLF_SYSTEM_REDIS_SRC}
+    )
+
+    set_target_properties(
+        boost_redis_src
+        coverage
+        cpp17_intro
+        cpp17_intro_sync
+        cpp20_containers
+        cpp20_echo_server
+        cpp20_intro
+        cpp20_intro_tls
+        cpp20_json
+        cpp20_resolve_with_sentinel
+        cpp20_streams
+        cpp20_subscriber
+        doc
+        echo_server_client
+        echo_server_direct
+        test_conn_echo_stress
+        test_conn_exec
+        test_conn_exec_cancel
+        test_conn_exec_cancel2
+        test_conn_exec_error
+        test_conn_exec_retry
+        test_conn_push
+        test_conn_quit
+        test_conn_reconnect
+        test_conn_run_cancel
+        test_conn_tls
+        test_issue_50
+        test_low_level
+        test_low_level_async
+        test_request
+        PROPERTIES FOLDER "boost-redis"
+    )
 endif()
 
 if (EMSCRIPTEN)

@@ -39,7 +39,7 @@ boost::leaf::result<int> w_gamepad_client::init() noexcept {
       s_controllers.push_back(SDL_OpenGamepad(_joysticks[i]));
     }
   }
-  return S_OK;
+  return 0;
 }
 
 //void w_gamepad_client::update() noexcept {

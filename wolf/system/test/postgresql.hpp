@@ -8,10 +8,10 @@
 
 #include <system/db/w_postgresql.hpp>
 
-using wolf::system::pgdb::w_pgdb_conection;
-using wolf::system::pgdb::w_pgdb_execresult;
-using wolf::system::pgdb::w_pgdb_queryresult;
-using wolf::system::pgdb::w_pgdb_record;
+using wolf::system::db::w_pgdb_conection;
+using wolf::system::db::w_pgdb_execresult;
+using wolf::system::db::w_pgdb_queryresult;
+using wolf::system::db::w_pgdb_record;
 
 #define POSTGRESQL_SERVER_ADDRESS "172.26.218.210"
 
