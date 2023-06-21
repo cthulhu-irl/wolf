@@ -11,9 +11,9 @@ env:
   build: "${{ github.workspace }}/build"
   ANDROID_ROOT: /usr/local/lib/android
   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-  NDK_VERSION: 25.2.9519653
+  NDK_VERSION: 23.2.8568313
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -44,19 +44,15 @@ jobs:
       with:
         java-version: "11.x"
 
-    - name: Configure SDK
+    - name: Configure NDK
       run: |
         SDKMANAGER=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager
         echo "y" | $SDKMANAGER "ndk;$NDK_VERSION"
 
-    - name: Configure NDK
-      env:
-        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+    - name: Configure Cmake
       run: |
         export ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/$NDK_VERSION
-
-    - name: Configure Cmake
-      run: cmake -S . -B ${{ env.build }} --preset ${{matrix.config.preset}}
+        cmake -S . -B ${{ env.build }} --preset ${{matrix.config.preset}}
       
     - name: Build CMake in Debug mode
       run: cmake --build ${{ env.build }} --config Debug
