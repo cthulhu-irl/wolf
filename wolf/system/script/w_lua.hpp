@@ -190,7 +190,7 @@ class w_lua {
    template <typename T>
   W_API boost::leaf::result<void> get_global_variable(const std::string_view p_name, T &p_value) {
     try {
-      p_value = this->_lua["p_name"];
+      p_value = (*this->_lua)[p_name];
     } catch (...) {
       return W_FAILURE(1, "can not get global variable");
     }

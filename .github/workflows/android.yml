@@ -33,10 +33,16 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y ninja-build pkg-config cmake
-      
+
+    - name: Cache vcpkg
+      uses: actions/cache@v3
+      with:
+        key: vcpkg-${{matrix.config.preset}}
+        path: vcpkg
+
     - name: Set up vcpkg
       run: |
-        git clone https://github.com/microsoft/vcpkg.git
+        git clone https://github.com/microsoft/vcpkg.git || git -C vcpkg pull -ff
         ./vcpkg/bootstrap-vcpkg.sh
         ./vcpkg/vcpkg integrate install
 
@@ -52,8 +58,8 @@ jobs:
     - name: Configure Cmake
       run: |
         export ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/$NDK_VERSION
-        cmake -S . -B ${{ env.build }} --preset ${{matrix.config.preset}}
-      
+        cmake -S . -B ${{ env.build }} --preset ${{matrix.config.preset}} -DWOLF_FEATURES_ALL=ON
+
     - name: Build CMake in Debug mode
       run: cmake --build ${{ env.build }} --config Debug
 

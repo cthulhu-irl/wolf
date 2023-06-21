@@ -67,19 +67,19 @@ class w_log {
 
 #else
   template <class... Args>
-  W_API void write(_In_ const fmt::v9::format_string<Args...> p_fmt,
+  W_API void write(_In_ const fmt::format_string<Args...> p_fmt,
                    _In_ Args &&...p_args) {
     const auto _str =
-        fmt::v9::vformat(p_fmt, fmt::v9::make_format_args(p_args...));
+        fmt::vformat(p_fmt, fmt::make_format_args(p_args...));
     write(_str);
   }
 
   template <class... Args>
   W_API void write(_In_ const spdlog::level::level_enum &p_level,
-                   _In_ const fmt::v9::format_string<Args...> p_fmt,
+                   _In_ const fmt::format_string<Args...> p_fmt,
                    _In_ Args &&...p_args) {
     const auto _str =
-        fmt::v9::vformat(p_fmt, fmt::v9::make_format_args(p_args...));
+        fmt::vformat(p_fmt, fmt::make_format_args(p_args...));
     write(p_level, _str);
   }
 
@@ -97,7 +97,7 @@ class w_log {
 
   W_API void _move(_Inout_ w_log &&p_other) noexcept;
 
-  w_log_config &&_config = {};
+  w_log_config _config = {};
   std::shared_ptr<spdlog::logger> _logger = nullptr;
   std::shared_ptr<spdlog::logger> _async_file_logger = nullptr;
 };

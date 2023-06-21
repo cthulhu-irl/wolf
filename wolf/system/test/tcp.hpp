@@ -9,7 +9,7 @@
 #include <system/socket/w_tcp_client.hpp>
 #include <system/socket/w_tcp_server.hpp>
 #include <system/w_leak_detector.hpp>
-#include <system/w_timer.hpp>
+#include <system/w_time.hpp>
 #include <wolf.hpp>
 
 BOOST_AUTO_TEST_CASE(tcp_server_timeout_test) {
@@ -52,6 +52,8 @@ BOOST_AUTO_TEST_CASE(tcp_server_timeout_test) {
                             << " because of " << p_error.what()
                             << "error code: " << p_error.code() << std::endl;
                 }));
+
+        BOOST_REQUIRE(_run_res);
 
         _io.run();
 

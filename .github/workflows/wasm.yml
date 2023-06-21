@@ -43,7 +43,7 @@ jobs:
           cd ..
 
       - name: Configure CMake in Debug mode
-        run: cmake -S . -B ${{ env.build }} --preset=wasm32-unknown-emscripten
+        run: cmake -S . -B ${{ env.build }} --preset=wasm32-unknown-emscripten -DWOLF_FEATURES_ALL=ON
  
       - name: Build CMake in Debug mode
         run: cmake --build ${{ env.build }} --config Debug
