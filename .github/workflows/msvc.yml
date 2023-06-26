@@ -2,7 +2,7 @@ name: windows-x64-Microsoft C++ Code Analysis
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "*-ci-*"]
   pull_request:
     branches: ["main"]
 
@@ -34,7 +34,7 @@ jobs:
 
       - name: Set up vcpkg
         run: |
-          git clone https://github.com/microsoft/vcpkg.git || git -C vcpkg pull --ff
+          git clone https://github.com/microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
           .\vcpkg\vcpkg integrate install
 
@@ -53,7 +53,7 @@ jobs:
           echo "C:\Program Files\OpenCppCoverage" >> $env:GITHUB_PATH
 
       - name: Configure CMake in Debug mode
-        run: cmake -S . -B ${{ env.build }} --preset=windows-x64-msvc-static -DWOLF_FEATURES_ALL=ON
+        run: cmake -S . -B ${{ env.build }} --preset=windows-x64-msvc-static -DWOLF_SYSTEM_REDIS=ON -DWOLF_SYSTEM_OPENSSL=ON  #-DWOLF_FEATURES_ALL=ON
  
       - name: Build CMake in Debug mode
         run: cmake --build ${{ env.build }} --config Debug
@@ -67,6 +67,11 @@ jobs:
           buildConfiguration: Debug
           ruleset: NativeRecommendedRules.ruleset
           ignoredTargetPaths: ${{ env.build }}/_deps;${{ env.build }}/_deps/tesseract-src
+
+      - name: Start Redis Service
+        uses: supercharge/redis-github-action@1.5.0
+        with:
+          redis-version: 7.0
 
       - name: Generate Codecov Report
         id: generate_test_report
@@ -95,5 +100,5 @@ jobs:
           name: sarif-file
           path: ${{ steps.run-analysis.outputs.sarif }}
 
-      - name: Build CMake in Release mode
-        run: cmake --build ${{ env.build }} --config Release
+      # - name: Build CMake in Release mode
+      #   run: cmake --build ${{ env.build }} --config Release

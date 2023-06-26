@@ -129,7 +129,7 @@ feature_option(WOLF_SYSTEM_LUA "Enable lua scripting language" WOLF_FEATURES_ALL
 feature_option(WOLF_SYSTEM_MIMALLOC "Enable Microsoft's mimalloc memory allocator" WOLF_FEATURES_ALL AND DESKTOP)
 feature_option(WOLF_SYSTEM_POSTGRESQL "Enable postgresql database client" WOLF_FEATURES_ALL AND DESKTOP)
 feature_option(WOLF_SYSTEM_PYTHON "Enable embedded Python3 scripting" WOLF_FEATURES_ALL AND DESKTOP AND NOT LINUX)
-feature_option(WOLF_SYSTEM_REDIS "Enable redis client based on hiredis" OFF)
+feature_option(WOLF_SYSTEM_REDIS "Enable redis client based on hiredis" WOLF_FEATURES_ALL AND DESKTOP)
 feature_option(WOLF_SYSTEM_SIG_SLOT "Enable signal/slot based on boost signals2" WOLF_FEATURES_ALL)
 feature_option(WOLF_SYSTEM_SOCKET "Enable TCP/UDP protocol over socket" WOLF_FEATURES_ALL AND NOT ANDROID)
 feature_option(WOLF_SYSTEM_OPENSSL "Enable openSSL" WOLF_FEATURES_ALL)
