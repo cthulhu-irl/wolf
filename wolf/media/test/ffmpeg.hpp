@@ -27,10 +27,7 @@ s_encode(_In_ const std::string &p_name,
   using w_encoder = wolf::media::ffmpeg::w_encoder;
 
   // create av frame from img
-  const auto _img_file_name = std::string("../../content/texture/rgb.png");
-  const std::filesystem::path _img_path =
-      std::filesystem::current_path().append(_img_file_name);
-
+  auto _img_path = get_content_path("texture/rgb.png");
   BOOST_LEAF_AUTO(_src_frame, w_av_frame::load_video_frame_from_img_file(
                                   _img_path, AVPixelFormat::AV_PIX_FMT_RGBA));
 
@@ -61,9 +58,7 @@ s_encode(_In_ const std::string &p_name,
   auto _packet = w_av_packet();
   BOOST_LEAF_CHECK(_encoder.encode(_yuv_frame, _packet, p_flush));
 
-  const std::filesystem::path _encoded_path =
-      std::filesystem::current_path().append(
-          wolf::format("/{}_yuv_encoded.png", p_name));
+  const auto _encoded_path = get_content_path(wolf::format("{}_yuv_encoded.png", p_name));
   BOOST_LEAF_CHECK(_yuv_frame.save_video_frame_to_img_file(_encoded_path));
 
   return std::make_tuple(std::move(_packet), _src_config, _dst_config);
@@ -110,8 +105,7 @@ static boost::leaf::result<void> s_decode(
                   _decoded_frame.convert_video(std::forward<w_av_config &&>(
                       std::get<1>(p_encoded_tuple))));
 
-  const std::filesystem::path _path = std::filesystem::current_path().append(
-      wolf::format("/{}_rgb_decoded.png", p_name));
+  const auto _path = get_content_path(wolf::format("{}_rgb_encoded.png", p_name));
   BOOST_LEAF_CHECK(_decoded_frame.save_video_frame_to_img_file(_path));
 
   return {};

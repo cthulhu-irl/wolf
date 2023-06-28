@@ -9,6 +9,7 @@
 
 #include <functional>
 #include <variant>
+#include <vector>
 
 #include "w_av_packet.hpp"
 #include "w_decoder.hpp"

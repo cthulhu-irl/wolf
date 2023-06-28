@@ -119,7 +119,7 @@ boost::leaf::result<w_av_frame> w_av_frame::convert_audio(_In_ w_av_config &&p_d
   _dst_frame.init();
 
   DEFER {
-    if (_ret != S_OK) {
+    if (_ret) {
       if (swr) {
         if (swr_is_initialized(swr)) {
           swr_close(swr);
@@ -263,9 +263,8 @@ boost::leaf::result<w_av_frame> w_av_frame::load_video_frame_from_img_file(
 
 boost::leaf::result<int> w_av_frame::save_video_frame_to_img_file(
     _In_ const std::filesystem::path &p_path, int p_quality) noexcept {
-  try {
 #ifdef WOLF_MEDIA_STB
-
+  try {
     if (this->_av_frame == nullptr || this->_av_frame->width == 0 || this->_av_frame->height == 0) {
       return W_FAILURE(std::errc::invalid_argument, "bad parameters for avframe");
     }

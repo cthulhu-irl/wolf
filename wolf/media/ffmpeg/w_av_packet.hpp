@@ -13,6 +13,8 @@ extern "C" {
 #include <libavcodec/packet.h>
 }
 
+#include <vector>
+
 namespace wolf::media::ffmpeg {
 
 class w_decoder;

@@ -121,5 +121,15 @@
             "displayName": "wasm32-unknown-emscripten",
             "name": "wasm32-unknown-emscripten"
         }
+    ],
+    "testPresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "output": {"outputOnFailure": true},
+            "configuration": "Debug"
+        },
+        { "name": "windows-x64-msvc-static", "inherits": "base", "configurePreset": "windows-x64-msvc-static" },
+        { "name": "linux-x64-gnu-shared", "inherits": "base", "configurePreset": "linux-x64-gnu-shared" }
     ]
 }

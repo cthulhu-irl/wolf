@@ -9,6 +9,20 @@
 #define BOOST_TEST_MODULE wolf
 #include <boost/test/included/unit_test.hpp>
 
+
+#include <string_view>
+#include <filesystem>
+#include <cstdlib>
+
+constexpr const char* ENVKEY_CONTENT_PATH = "WOLF_CONTENT_PATH";
+inline std::filesystem::path get_content_path(const std::string_view p_subpath)
+{
+  auto env_content_path = std::getenv(ENVKEY_CONTENT_PATH);
+  return env_content_path
+       ? std::filesystem::path(env_content_path).append(p_subpath)
+       : std::filesystem::current_path().append(p_subpath);
+}
+
 BOOST_AUTO_TEST_CASE(wolf_test) {
   const wolf::system::w_leak_detector _detector = {};
 
@@ -50,8 +64,8 @@ BOOST_AUTO_TEST_CASE(wolf_test) {
 
 #pragma region media tests
 
-// #include <wolf/media/test/avframe.hpp>
-// #include <wolf/media/test/ffmpeg.hpp>
+#include <wolf/media/test/avframe.hpp>
+#include <wolf/media/test/ffmpeg.hpp>
 // #include <wolf/media/test/image.hpp>
 // #include <wolf/media/test/openal.hpp>
 // #include <wolf/media/test/gstreamer.hpp>
