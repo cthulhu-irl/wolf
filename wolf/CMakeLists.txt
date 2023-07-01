@@ -106,7 +106,7 @@ endmacro()
 option(WOLF_FEATURES_ALL "Enable all features by default" OFF)
 
 # media modules
-feature_option(WOLF_MEDIA_FFMPEG "Enable ffmpeg encoding and decoding" OFF)
+feature_option(WOLF_MEDIA_FFMPEG "Enable ffmpeg encoding and decoding" WOLF_FEATURES_ALL AND (WIN32 OR ANDROID) AND NOT EMSCRIPTEN)
 feature_option(WOLF_MEDIA_OPENAL "Enable OpenAL soft" WOLF_FEATURES_ALL AND NOT LINUX AND NOT EMSCRIPTEN)
 feature_option(WOLF_MEDIA_SCREEN_CAPTURE "Enable screen capture" WOLF_FEATURES_ALL AND DESKTOP)
 feature_option(WOLF_MEDIA_STB "Enable stb headers" WOLF_FEATURES_ALL)
@@ -129,7 +129,7 @@ feature_option(WOLF_SYSTEM_LUA "Enable lua scripting language" WOLF_FEATURES_ALL
 feature_option(WOLF_SYSTEM_MIMALLOC "Enable Microsoft's mimalloc memory allocator" WOLF_FEATURES_ALL AND DESKTOP)
 feature_option(WOLF_SYSTEM_POSTGRESQL "Enable postgresql database client" WOLF_FEATURES_ALL AND DESKTOP)
 feature_option(WOLF_SYSTEM_PYTHON "Enable embedded Python3 scripting" WOLF_FEATURES_ALL AND DESKTOP AND NOT LINUX)
-feature_option(WOLF_SYSTEM_REDIS "Enable redis client based on hiredis" WOLF_FEATURES_ALL AND DESKTOP)
+feature_option(WOLF_SYSTEM_REDIS "Enable redis client based on hiredis" OFF)
 feature_option(WOLF_SYSTEM_SIG_SLOT "Enable signal/slot based on boost signals2" WOLF_FEATURES_ALL)
 feature_option(WOLF_SYSTEM_SOCKET "Enable TCP/UDP protocol over socket" WOLF_FEATURES_ALL AND NOT ANDROID)
 feature_option(WOLF_SYSTEM_OPENSSL "Enable openSSL" WOLF_FEATURES_ALL)
@@ -191,6 +191,16 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 set(GETOPT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/system)
+
+# complex/pre-built wolf dependencies to be made available.
+set(WDEPS_MSQUIC ${WOLF_STREAM_QUIC})
+set(WDEPS_FFMPEG5 ${WOLF_MEDIA_FFMPEG})
+FetchContent_Declare(
+    wolf-deps
+    GIT_REPOSITORY https://github.com/WolfEngine/wolf-deps
+    GIT_TAG        main
+)
+FetchContent_MakeAvailable(wolf-deps)
 
 # include cmakes
 include(cmake/vcpkg.cmake)
@@ -368,7 +378,7 @@ if (WOLF_TEST)
         tests.cpp
         ${TESTS_SRCS}
     )
-    
+
     if (MSVC OR WIN32)
         if (LIBRARY_TYPE STREQUAL "STATIC")
             set_property(TARGET ${TEST_PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -389,6 +399,19 @@ if (WOLF_TEST)
 
     include(CTest)
     add_test(NAME ${TEST_PROJECT_NAME} COMMAND ${TEST_PROJECT_NAME})
+
+    set_tests_properties(${TEST_PROJECT_NAME}
+        PROPERTIES
+            ENVIRONMENT WOLF_CONTENT_PATH="${CMAKE_SOURCE_DIR}/content"
+    )
+
+    # copy runtime dll files to the same directory as the executable.
+    if(WIN32)
+        add_custom_command(TARGET ${TEST_PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${TEST_PROJECT_NAME}> $<TARGET_FILE_DIR:${TEST_PROJECT_NAME}>
+            COMMAND_EXPAND_LISTS
+        )
+    endif()
 endif()
 
 if( WOLF_ML_NUDITY_DETECTION AND WIN64)

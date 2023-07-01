@@ -4,21 +4,9 @@ if (WOLF_MEDIA_FFMPEG)
     "${CMAKE_CURRENT_SOURCE_DIR}/media/ffmpeg/*"
   )
   list(APPEND SRCS ${WOLF_MEDIA_FFMPEG_SRC})
-  list(APPEND INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/third_party/ffmpeg/include)
 
-  list(APPEND FFMPEG_LIBS 
-    avcodec 
-    avdevice 
-    avfilter
-    avformat
-    avutil
-    swresample
-    swscale
-    )
-
-  foreach (lib_name ${FFMPEG_LIBS})
-    list(APPEND LIBS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/ffmpeg/lib/${TARGET_OS}/${lib_name}.${LIB_EXT})
-  endforeach()
+  # dependency is availbale by wolf-deps in root cmake.
+  list(APPEND LIBS ffmpeg::ffmpeg)
 endif()
 
 # link openAL

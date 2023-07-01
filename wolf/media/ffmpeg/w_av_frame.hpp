@@ -15,6 +15,8 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
+#include <vector>
+
 namespace wolf::media::ffmpeg {
 
 class w_decoder;
@@ -95,8 +97,6 @@ class w_av_frame {
    */
   W_API w_av_config get_config() const noexcept;
 
-#ifdef WOLF_MEDIA_STB
-
   /**
    * create w_av_frame from image file path
    * @returns the AVFrame
@@ -114,8 +114,6 @@ class w_av_frame {
   W_API
   boost::leaf::result<int> save_video_frame_to_img_file(
       _In_ const std::filesystem::path &p_path, int p_quality = 100) noexcept;
-
-#endif
 
  private:
   // copy constructor.

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <variant>
+#include <vector>
 
 #include "w_av_frame.hpp"
 #include "w_av_packet.hpp"

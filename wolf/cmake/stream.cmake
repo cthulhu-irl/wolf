@@ -62,14 +62,7 @@ if (WOLF_STREAM_QUIC)
       "${CMAKE_CURRENT_SOURCE_DIR}/stream/quic/*"
     )
 
-    FetchContent_Declare(
-        msquic
-        GIT_REPOSITORY https://github.com/WolfEngine/wolf-deps
-        GIT_TAG        main
-        SOURCE_SUBDIR  msquic
-    )
-    FetchContent_MakeAvailable(msquic)
-
+    # dependency is availbale by wolf-deps in root cmake.
     list(APPEND LIBS msquic::msquic)
 
     file(GLOB_RECURSE WOLF_STREAM_QUIC_DATATYPES_SRC
