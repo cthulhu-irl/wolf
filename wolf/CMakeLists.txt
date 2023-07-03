@@ -408,7 +408,7 @@ if (WOLF_TEST)
     # copy runtime dll files to the same directory as the executable.
     if(WIN32)
         add_custom_command(TARGET ${TEST_PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${TEST_PROJECT_NAME}> $<TARGET_FILE_DIR:${TEST_PROJECT_NAME}>
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TEST_PROJECT_NAME}> $<TARGET_RUNTIME_DLLS:${TEST_PROJECT_NAME}> $<TARGET_FILE_DIR:${TEST_PROJECT_NAME}>
             COMMAND_EXPAND_LISTS
         )
     endif()
