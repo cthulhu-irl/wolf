@@ -312,40 +312,6 @@ if (WOLF_SYSTEM_REDIS)
     list(APPEND SRCS
         ${WOLF_SYSTEM_REDIS_SRC}
     )
-
-    set_target_properties(
-        boost_redis_src
-        coverage
-        cpp17_intro
-        cpp17_intro_sync
-        cpp20_containers
-        cpp20_echo_server
-        cpp20_intro
-        cpp20_intro_tls
-        cpp20_json
-        cpp20_resolve_with_sentinel
-        cpp20_streams
-        cpp20_subscriber
-        doc
-        echo_server_client
-        echo_server_direct
-        test_conn_echo_stress
-        test_conn_exec
-        test_conn_exec_cancel
-        test_conn_exec_cancel2
-        test_conn_exec_error
-        test_conn_exec_retry
-        test_conn_push
-        test_conn_quit
-        test_conn_reconnect
-        test_conn_run_cancel
-        test_conn_tls
-        test_issue_50
-        test_low_level
-        test_low_level_async
-        test_request
-        PROPERTIES FOLDER "boost-redis"
-    )
 endif()
 
 if (EMSCRIPTEN)
