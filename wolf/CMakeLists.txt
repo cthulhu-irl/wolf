@@ -80,6 +80,11 @@ endif()
 
 set(LIBRARY_TYPE "${LIBRARY_TYPE}" CACHE STRING "Library type")
 
+if (CMAKE_BUILD_TYPE STREQUAL "" OR NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Build type not specified. Defaulting to Debug")
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
+endif()
+
 # Build options
 set(LIB_INSTALL_DIR lib CACHE STRING "Install location of libraries")
 set(BIN_INSTALL_DIR bin CACHE STRING "Install location of executables")
@@ -199,6 +204,7 @@ FetchContent_Declare(
     wolf-deps
     GIT_REPOSITORY https://github.com/WolfEngine/wolf-deps
     GIT_TAG        main
+    GIT_SHALLOW    ON
 )
 FetchContent_MakeAvailable(wolf-deps)
 
@@ -239,50 +245,6 @@ endif()
 #     clang-tidy;
 #     -format-style=file;)  
 
-# add definitions
-
-if (CMAKE_BUILD_TYPE STREQUAL "" OR NOT CMAKE_BUILD_TYPE)
-    message(STATUS "Build type not specified. Defaulting to Debug")
-    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
-endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-DDEBUG)
-else()
-    add_definitions(-DNDEBUG)
-endif()
-
-add_definitions(
-    -DBOOST_ASIO_NO_DEPRECATED
-    -DBOOST_ASIO_HAS_CO_AWAIT
-    -DBOOST_ASIO_HAS_STD_COROUTINE 
-)
-if (MSVC)
-    add_definitions(
-        -EHsc
-        -DNOMINMAX
-        -DWIN32_LEAN_AND_MEAN
-        -DWIN64
-        -DWIN32
-        -D_WIN32_WINNT=0x0601 # Windows 7
-    )
-elseif (EMSCRIPTEN)
-    add_definitions(
-        -DEMSCRIPTEN
-    )
-elseif(APPLE)
-    add_definitions(-DNEED_XLOCALE_H=1)
-endif()
-
-# setup Wolf definitions
-get_cmake_property(_vars VARIABLES)
-foreach (_var ${_vars})
-    string(FIND ${_var} "WOLF_" out)
-    if(("${out}" EQUAL 0) AND ("(${${_var}}" MATCHES ON))
-        add_definitions("-D${_var}")
-    endif()
-endforeach()
-
 # include sources
 file(GLOB_RECURSE WOLF_SRCS
     "${CMAKE_CURRENT_SOURCE_DIR}/wolf.cpp"
@@ -299,13 +261,6 @@ file(GLOB_RECURSE WOLF_CMAKES
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/*"
 )
 
-# includes
-include_directories(
-    ${INCLUDES}
-	${CMAKE_CURRENT_SOURCE_DIR} 
-	${CMAKE_CURRENT_SOURCE_DIR}/../
-)
-
 # add source codes
 add_library(${PROJECT_NAME} ${LIBRARY_TYPE} 
     ${SRCS}
@@ -313,6 +268,15 @@ add_library(${PROJECT_NAME} ${LIBRARY_TYPE}
     ${WOLF_CMAKES}
     ${WOLF_PROTOS}
 )
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${INCLUDES}
+	${CMAKE_CURRENT_SOURCE_DIR} 
+	${CMAKE_CURRENT_SOURCE_DIR}/../
+)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBS})
 
 if (WOLF_STREAM_RIST)
     add_dependencies(${PROJECT_NAME} ${RIST_TARGET})
@@ -326,8 +290,42 @@ if (MSVC OR WIN32)
     endif()
 endif()
 
-# link libraries
-target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBS})
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC -DDEBUG)
+else()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC -DNDEBUG)
+endif()
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC 
+    -DBOOST_ASIO_NO_DEPRECATED
+    -DBOOST_ASIO_HAS_CO_AWAIT
+    -DBOOST_ASIO_HAS_STD_COROUTINE 
+)
+if (MSVC)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC 
+        -EHsc
+        -DNOMINMAX
+        -DWIN32_LEAN_AND_MEAN
+        -DWIN64
+        -DWIN32
+        -D_WIN32_WINNT=0x0601 # Windows 7
+    )
+elseif (EMSCRIPTEN)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC 
+        -DEMSCRIPTEN
+    )
+elseif(APPLE)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC -DNEED_XLOCALE_H=1)
+endif()
+
+# setup Wolf definitions
+get_cmake_property(_vars VARIABLES)
+foreach (_var ${_vars})
+    string(FIND ${_var} "WOLF_" out)
+    if(("${out}" EQUAL 0) AND ("(${${_var}}" MATCHES ON))
+        target_compile_definitions(${PROJECT_NAME} PUBLIC "-D${_var}")
+    endif()
+endforeach()
 
 # create source group
 source_group("wolf" FILES ${WOLF_SRCS})
