@@ -1,5 +1,7 @@
 #include "w_python.hpp"
 
+#include <Python.h>
+
 using w_python = wolf::system::python::w_python;
 
 w_python::w_python(const std::string_view& p_python_home_path) {

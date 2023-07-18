@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <wolf/wolf.hpp>
+#include "wolf/wolf.hpp"
 
 extern "C" {
 #include <libavformat/avformat.h>

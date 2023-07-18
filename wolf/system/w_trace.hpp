@@ -15,6 +15,12 @@
 #include <string>
 #include <thread>
 
+#if WIN32
+#include <Windows.h>
+#endif
+
+#include "wolf/wolf.hpp"
+
 class w_trace {
  public:
   struct stack {
