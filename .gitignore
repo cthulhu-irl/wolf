@@ -26,6 +26,9 @@
 /coverage/*
 /install/*
 
+*.DS_Store
+*.suo
+
 # Compiled Object files
 *.slo
 *.lo
@@ -45,3 +48,4 @@
 *.exe
 *.out
 *.app
+

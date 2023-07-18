@@ -107,7 +107,7 @@ struct w_buffer {
 
 #endif
 
-#include <wolf/system/invocable.h>
+#include <wolf/system/invocable.hpp>
 
 #include <wolf/system/w_trace.hpp>
 

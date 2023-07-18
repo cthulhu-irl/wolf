@@ -1,4 +1,4 @@
-#include "w_av_config.hpp"
+#include "wolf/media/ffmpeg/w_av_config.hpp"
 
 using w_av_config = wolf::media::ffmpeg::w_av_config;
 
