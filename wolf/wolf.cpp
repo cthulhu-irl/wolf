@@ -92,3 +92,12 @@ std::string wolf::get_env(const std::string_view p_env) {
 
   return val;
 }
+
+void wolf::set_env(const std::string_view p_key, const std::string_view p_value)
+{
+#ifdef _MSC_VER
+    _putenv_s(p_key.data(), p_value.data());
+#else
+#error TODO putenv in non-windows systems.
+#endif
+}

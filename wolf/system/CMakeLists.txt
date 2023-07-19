@@ -3,12 +3,14 @@ set(WOLF_SYSTEM_COMMON_HEADERS
     w_flags.hpp
     w_trace.hpp
     w_gametime.hpp
+    w_dotenv.hpp
 )
 set(WOLF_SYSTEM_COMMON_SOURCES
     w_overloaded.cpp
     w_flags.cpp
     w_trace.cpp
     w_gametime.cpp
+    w_dotenv.cpp
 )
 if (NOT EMSCRIPTEN)
     list(APPEND WOLF_SYSTEM_COMMON_HEADERS

@@ -13,6 +13,7 @@ target_sources(${TEST_PROJECT_NAME}
         tcp.cpp
         trace.cpp
         ws.cpp
+        dotenv.cpp
 )
 
 if (NOT ANDROID)

@@ -129,6 +129,8 @@ W_API std::string w_init();
  */
 W_API std::string get_env(const std::string_view p_env);
 
+W_API void set_env(const std::string_view p_key, const std::string_view p_value);
+
 /**
  * make a string via format
  * @param p_fmt, the fmt
