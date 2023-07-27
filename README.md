@@ -12,7 +12,7 @@ The Wolf Engine is the next generation of the [Persian Game Engine](https://gith
 	- [vcpkg](https://vcpkg.io/)
 	- [Meson](https://github.com/mesonbuild/meson/releases)
 	- [Ninja](https://ninja-build.org/)
-	- [autoconf] will be needed for Linux of OSX. For Linux use the following command `sudo apt-get install autoconf` and for OSX use `brew install autoconf`
+	- `autoconf` will be needed for Linux or OSX. For Linux use the following command `sudo apt-get install autoconf` and for OSX use `brew install autoconf`
 	- [QT6](https://www.qt.io/download) for demos and examples
 	- [NDK](https://developer.android.com/ndk/downloads) for android
 	
