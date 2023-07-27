@@ -1,4 +1,4 @@
-# Wolf Engine [![Apache licensed](https://img.shields.io/badge/license-Apache-blue)](https://github.com/WolfEngine/wolf/blob/main/LICENSE.md) [![codecov](https://codecov.io/github/WolfEngine/wolf/branch/main/graph/badge.svg?token=AhoU9QV7eS)](https://codecov.io/github/WolfEngine/wolf) [![windows-x64-Microsoft C++ Code Analysis](https://github.com/WolfEngine/wolf/actions/workflows/msvc.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/msvc.yml) [![osx-arm64](https://github.com/WolfEngine/wolf/actions/workflows/osx.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/osx.yml) [![ubuntu-x64-CodeQL Analysis](https://github.com/WolfEngine/wolf/actions/workflows/linux.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/linux.yml) [![android-multi-ABIs](https://github.com/WolfEngine/wolf/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/android.yml)[![wasm32-unknown-emscripten](https://github.com/WolfEngine/wolf/actions/workflows/wasm.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/wasm.yml)
+# Wolf Engine [![Apache licensed](https://img.shields.io/badge/license-Apache-blue)](https://github.com/WolfEngine/wolf/blob/main/LICENSE.md) [![codecov](https://codecov.io/github/WolfEngine/wolf/branch/main/graph/badge.svg?token=AhoU9QV7eS)](https://codecov.io/github/WolfEngine/wolf) [![windows-x64-Microsoft C++ Code Analysis](https://github.com/WolfEngine/wolf/actions/workflows/msvc.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/msvc.yml) [![ubuntu-x64-CodeQL Analysis](https://github.com/WolfEngine/wolf/actions/workflows/linux.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/linux.yml) [![osx-arm64](https://github.com/WolfEngine/wolf/actions/workflows/osx.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/osx.yml) [![android-multi-ABIs](https://github.com/WolfEngine/wolf/actions/workflows/android.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/android.yml)[![wasm32-unknown-emscripten](https://github.com/WolfEngine/wolf/actions/workflows/wasm.yml/badge.svg?branch=main)](https://github.com/WolfEngine/wolf/actions/workflows/wasm.yml)
 
 <img src="https://raw.githubusercontent.com/WolfEngine/wolf/main/Logo.png" width="256" height="256" alt="wolf"/>
 
@@ -54,11 +54,11 @@ cmake --install C:/wolf/build/windows-x64-msvc-static --prefix C:/wolf
 
 | API | Windows | Linux | macOS | iOS | Android | Wasm |
 |:-----------:|:-----------:|:--------------------------:|:--------------:|:-------------:|:--------------:|:-------------:|
-| [Bitmap](https://github.com/WolfEngine/wolf/blob/main/tests/media/ffmpeg.cpp) | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :memo: | :x: |
+| [Bitmap](https://github.com/WolfEngine/wolf/blob/main/tests/media/ffmpeg.cpp) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :x: |
 | [FFmpeg](https://github.com/WolfEngine/wolf/blob/main/tests/stream/ffmpeg_stream.cpp) | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :memo: | :x: |
-| [JPEG](https://github.com/WolfEngine/wolf/blob/main/tests/media/ffmpeg.cpp) | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :memo: | :x: |
-| [OpenAL](https://github.com/WolfEngine/wolf/blob/main/tests/media/openal.cpp) | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :memo: | :x: |
-| [PNG](https://github.com/WolfEngine/wolf/blob/main/tests/media/ffmpeg.cpp) | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :memo: | :x: |
+| [JPEG](https://github.com/WolfEngine/wolf/blob/main/tests/media/ffmpeg.cpp) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :x: |
+| [OpenAL](https://github.com/WolfEngine/wolf/blob/main/tests/media/openal.cpp) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :x: |
+| [PNG](https://github.com/WolfEngine/wolf/blob/main/tests/media/ffmpeg.cpp) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :x: |
 | WebP | :memo: | :memo: | :memo: | :memo: | :memo: | :x: |
 
 ### Supported platforms and APIs for stream module
@@ -80,20 +80,20 @@ cmake --install C:/wolf/build/windows-x64-msvc-static --prefix C:/wolf
 | API | Windows | Linux | macOS | iOS | Android | Wasm |
 |:-----------:|:-----------:|:--------------------------:|:--------------:|:-------------:|:--------------:|:-------------:|
 | [Coroutine](https://github.com/WolfEngine/wolf/blob/main/tests/system/coroutine.cpp) | :white_check_mark: | :white_check_mark: | :memo: | :x: | :x: | :x: |
-| [GameTime](https://github.com/WolfEngine/wolf/blob/main/tests/system/gametime.cpp) | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :memo: | :white_check_mark: |
+| [GameTime](https://github.com/WolfEngine/wolf/blob/main/tests/system/gametime.cpp) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :white_check_mark: |
 | [Gamepad](https://github.com/WolfEngine/wolf/blob/main/tests/system/gamepad.cpp) | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :memo: | :white_check_mark: |
 | [Virtual Gamepad](https://github.com/WolfEngine/wolf/blob/main/tests/system/gamepad.cpp) | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
-| [Log](https://github.com/WolfEngine/wolf/blob/main/tests/system/log.cpp)  | :white_check_mark: | :white_check_mark: | :construction: | :construction: | :construction: | :construction: | 
-| LuaJit  | :memo: | :memo: | :memo: | :memo: | :memo: | :x: |
-| [LZ4](https://github.com/WolfEngine/wolf/blob/main/tests/system/compress.cpp)  | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :memo: | :x: |
-| [LZMA](https://github.com/WolfEngine/wolf/blob/main/tests/system/compress.cpp)  | :white_check_mark: | :white_check_mark: | :memo: | :x: | :x: | :x: |
+| [Log](https://github.com/WolfEngine/wolf/blob/main/tests/system/log.cpp)  | :white_check_mark: | :white_check_mark: | :white_check_mark: | :construction: | :construction: | :construction: | 
+| LuaJit  | :white_check_mark: | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :x: |
+| [LZ4](https://github.com/WolfEngine/wolf/blob/main/tests/system/compress.cpp)  | :white_check_mark: | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :x: |
+| [LZMA](https://github.com/WolfEngine/wolf/blob/main/tests/system/compress.cpp)  | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: |
 | OpenTelemetry  | :memo: | :memo: | :memo: | :x: | :x: | :x: |
 | RAFT  | :memo: | :memo: | :memo: | :memo: | :memo: | :memo: |
 | [Redis](https://github.com/WolfEngine/wolf/blob/main/tests/system/redis.cpp) | :white_check_mark: | :memo: | :memo: | :x: | :x: | :x: |
 | Screen Capture  | :memo: | :construction: | :construction: | :x: | :x: | :x: |
-| [Signal Slot](https://github.com/WolfEngine/wolf/blob/main/tests/system/signal_slot.cpp)  | :white_check_mark: | :white_check_mark: | :construction: | :x: | :x: | :x: |
+| [Signal Slot](https://github.com/WolfEngine/wolf/blob/main/tests/system/signal_slot.cpp)  | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: |
 | [TCP](https://github.com/WolfEngine/wolf/blob/main/tests/system/tcp.cpp) | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :memo: | :x: |
-| [Trace](https://github.com/WolfEngine/wolf/blob/main/tests/system/trace.cpp) | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :memo: | :x: |
+| [Trace](https://github.com/WolfEngine/wolf/blob/main/tests/system/trace.cpp) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :memo: | :memo: | :x: |
 | UDP | :construction: | :memo: | :memo: | :memo: | :memo: | :x: |
 | Wasm3  | :memo: | :memo: | :memo: | :memo: | :memo: | :memo: |
 
