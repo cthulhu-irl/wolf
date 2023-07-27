@@ -1,0 +1,47 @@
+name: osx-arm64
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  # Path to the CMake build directory.
+  build: "${{ github.workspace }}/build"
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    name: Analyze
+    runs-on: macos-13
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install build dependencies
+        run: |
+          brew install pkg-config ninja
+
+      - name: Set up vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.sh
+          ./vcpkg/vcpkg integrate install
+
+      - name: Configure CMake in Debug mode
+        run: cmake -S . -B ${{ env.build }} --preset=osx-arm64-clang -DWOLF_FEATURES_ALL=ON
+ 
+      - name: Build CMake in Debug mode
+        run: cmake --build ${{ env.build }} --config Debug
+
+      - name: Build CMake in Release mode
+        run: cmake --build ${{ env.build }} --config Release
+          

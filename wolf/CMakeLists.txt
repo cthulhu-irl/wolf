@@ -50,7 +50,7 @@ find_package(Microsoft.GSL CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC Microsoft.GSL::GSL)
 
 vcpkg_install_force(boost-leaf boost-signals2)
-find_package(Boost 1.82 REQUIRED)
+find_package(Boost ${BOOST_VERSION} REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC Boost::boost)
 
 if (NOT MSVC AND NOT EMSCRIPTEN)

@@ -31,12 +31,13 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
+set(BOOST_VERSION "1.82.0" CACHE STRING "Boost version tag")
 option(BUILD_SHARED_LIBS "Whether to build shared or static library" ANDROID)
 option(WOLF_TEST "Enable tests" ${WOLF_MAIN_PROJECT})
 option(WOLF_FEATURES_ALL "Enable all features by default" ${WOLF_MAIN_PROJECT})
 
 # media modules
-wolf_feature_option(WOLF_MEDIA_FFMPEG "Enable ffmpeg encoding and decoding" WOLF_FEATURES_ALL AND (WIN32 OR ANDROID) AND NOT EMSCRIPTEN)
+wolf_feature_option(WOLF_MEDIA_FFMPEG "Enable ffmpeg encoding and decoding" WOLF_FEATURES_ALL AND (WIN64 OR ANDROID) AND NOT EMSCRIPTEN)
 wolf_feature_option(WOLF_MEDIA_OPENAL "Enable OpenAL soft" WOLF_FEATURES_ALL AND NOT LINUX AND NOT EMSCRIPTEN)
 wolf_feature_option(WOLF_MEDIA_SCREEN_CAPTURE "Enable screen capture" OFF)
 wolf_feature_option(WOLF_MEDIA_STB "Enable stb headers" WOLF_FEATURES_ALL)
@@ -49,8 +50,8 @@ wolf_feature_option(WOLF_STREAM_RIST "Enable RIST streaming protocol" OFF)
 wolf_feature_option(WOLF_STREAM_WEBRTC "Enable webRTC" OFF)
 
 # system modules
-wolf_feature_option(WOLF_SYSTEM_GAMEPAD_CLIENT "Enable gamepad input handling" WOLF_FEATURES_ALL AND NOT LINUX AND NOT EMSCRIPTEN)
-wolf_feature_option(WOLF_SYSTEM_GAMEPAD_VIRTUAL "Enable virtual gamepad simulator" OFF)
+wolf_feature_option(WOLF_SYSTEM_GAMEPAD_CLIENT "Enable gamepad input handling" WOLF_FEATURES_ALL AND WIN64 AND NOT EMSCRIPTEN)
+wolf_feature_option(WOLF_SYSTEM_GAMEPAD_VIRTUAL "Enable virtual gamepad simulator" OFF) #WOLF_FEATURES_ALL AND WIN64 AND NOT EMSCRIPTEN
 wolf_feature_option(WOLF_SYSTEM_HTTP_WS "Enable http1.1 and websocket client/server based on boost beast or Emscripten" WOLF_FEATURES_ALL)
 wolf_feature_option(WOLF_SYSTEM_LOG "Enable log" WOLF_FEATURES_ALL AND NOT EMSCRIPTEN)
 wolf_feature_option(WOLF_SYSTEM_LZ4 "Enable lz4 for compression" WOLF_FEATURES_ALL AND NOT EMSCRIPTEN)
@@ -61,9 +62,9 @@ wolf_feature_option(WOLF_SYSTEM_POSTGRESQL "Enable postgresql database client" W
 wolf_feature_option(WOLF_SYSTEM_PYTHON "Enable embedded Python3 scripting" OFF) #WOLF_FEATURES_ALL AND DESKTOP AND NOT LINUX)
 wolf_feature_option(WOLF_SYSTEM_REDIS "Enable redis client based on hiredis" OFF)
 wolf_feature_option(WOLF_SYSTEM_SIG_SLOT "Enable signal/slot based on boost signals2" WOLF_FEATURES_ALL)
-wolf_feature_option(WOLF_SYSTEM_SOCKET "Enable TCP/UDP protocol over socket" WOLF_FEATURES_ALL AND NOT ANDROID)
+wolf_feature_option(WOLF_SYSTEM_SOCKET "Enable TCP/UDP protocol over socket" WOLF_FEATURES_ALL AND NOT APPLE AND NOT MOBILE)
 wolf_feature_option(WOLF_SYSTEM_OPENSSL "Enable openSSL" WOLF_FEATURES_ALL)
-wolf_feature_option(WOLF_SYSTEM_STACKTRACE "Enable boost stacktrace" WOLF_FEATURES_ALL AND WIN32 AND NOT EMSCRIPTEN)
+wolf_feature_option(WOLF_SYSTEM_STACKTRACE "Enable boost stacktrace" WOLF_FEATURES_ALL AND WIN64 AND NOT EMSCRIPTEN)
 wolf_feature_option(WOLF_SYSTEM_ZLIB "Enable Zlib compression library" WOLF_FEATURES_ALL AND NOT EMSCRIPTEN)
 
 # machine learing modules

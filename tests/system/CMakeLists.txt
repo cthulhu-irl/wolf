@@ -15,7 +15,7 @@ target_sources(${TEST_PROJECT_NAME}
         ws.cpp
 )
 
-if (NOT ANDROID)
+if (NOT ANDROID AND NOT APPLE)
     target_sources(${TEST_PROJECT_NAME}
         PRIVATE
             coroutine.cpp

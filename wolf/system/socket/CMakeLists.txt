@@ -15,7 +15,7 @@ if (WOLF_SYSTEM_SOCKET)
     )
 
     vcpkg_install_force(boost-asio)
-    find_package(Boost 1.82 REQUIRED)
+    find_package(Boost ${BOOST_VERSION} REQUIRED)
     target_link_libraries(${PROJECT_NAME} PUBLIC Boost::boost)
 endif()
 
@@ -40,6 +40,6 @@ if (WOLF_SYSTEM_HTTP_WS)
     )
 
     vcpkg_install_force(boost-asio)
-    find_package(Boost 1.82 REQUIRED)
+    find_package(Boost ${BOOST_VERSION} REQUIRED)
     target_link_libraries(${PROJECT_NAME} PUBLIC Boost::boost)
 endif()

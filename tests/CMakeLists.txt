@@ -1,5 +1,5 @@
 vcpkg_install_force(boost-test)
-find_package(Boost 1.82 REQUIRED)
+find_package(Boost ${BOOST_VERSION} REQUIRED)
 
 set(TEST_PROJECT_NAME wolf_tests)
 add_executable(${TEST_PROJECT_NAME})
