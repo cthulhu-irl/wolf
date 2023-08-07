@@ -16,9 +16,11 @@
 #include <stacktrace>
 #include <system/w_process.hpp>
 
-static void w_signal_handler(int p_signum) {
+static void w_signal_handler(int p_signum)
+{
   auto _path = wolf::system::w_process::current_exe_path();
-  if (_path.has_error()) {
+  if (_path.has_error())
+  {
     return;
   }
 
@@ -30,8 +32,9 @@ static void w_signal_handler(int p_signum) {
 
 #ifdef __clang__
 #pragma unroll
-#endif  // __clang__
-  for (const auto &trace : std::stacktrace()) {
+#endif // __clang__
+  for (const auto &trace : std::stacktrace())
+  {
     _traces << "name: " << trace.description()
             << " source_file: " << trace.source_file() << "("
             << std::to_string(trace.source_line()) << ")\r\n";
@@ -39,7 +42,8 @@ static void w_signal_handler(int p_signum) {
 
   std::fstream _file;
   _file.open(_path_str.string(), std::ios_base::out);
-  if (_file.is_open()) {
+  if (_file.is_open())
+  {
     _file << _traces.str();
     _file.close();
   }
@@ -49,7 +53,8 @@ static void w_signal_handler(int p_signum) {
 
 #endif
 
-std::string wolf::w_init() {
+std::string wolf::w_init()
+{
 #if defined(WOLF_SYSTEM_STACKTRACE) && !defined(WOLF_TESTS)
   std::ignore = signal(SIGSEGV, &w_signal_handler);
   std::ignore = signal(SIGABRT, &w_signal_handler);
@@ -70,25 +75,39 @@ std::string wolf::w_init() {
   return _version;
 }
 
-std::string wolf::get_env(const std::string_view p_env) {
+std::string wolf::get_env(const std::string_view p_env)
+{
   std::string val;
-  if (p_env.empty()) {
+  if (p_env.empty())
+  {
     return val;
   }
 
 #ifdef _MSC_VER
   char *buf = nullptr;
   size_t size = 0;
-  if (_dupenv_s(&buf, &size, p_env.data()) == 0 && buf != nullptr) {
+  if (_dupenv_s(&buf, &size, p_env.data()) == 0 && buf != nullptr)
+  {
     val = buf;
     free(buf);
   }
 #else
   const auto buf = std::getenv(p_env.data());
-  if (buf != nullptr) {
+  if (buf != nullptr)
+  {
     val = buf;
   }
 #endif
 
   return val;
+}
+
+std::filesystem::path wolf::get_content_path(
+    const std::string_view p_subpath)
+{
+  constexpr const char *ENVKEY_CONTENT_PATH = "WOLF_CONTENT_PATH";
+  auto env_content_path = wolf::get_env(ENVKEY_CONTENT_PATH);
+  return env_content_path.empty()
+             ? std::filesystem::current_path().append(p_subpath)
+             : std::filesystem::path(env_content_path).append(p_subpath);
 }

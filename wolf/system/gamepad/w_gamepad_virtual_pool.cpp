@@ -9,21 +9,25 @@ using w_gamepad_virtual_bus = wolf::system::gamepad::w_gamepad_virtual_bus;
 
 static auto s_bus = std::make_shared<w_gamepad_virtual_bus>();
 
-boost::leaf::result<VIGEM_ERROR> w_gamepad_virtual_pool::init() noexcept {
+boost::leaf::result<VIGEM_ERROR> w_gamepad_virtual_pool::init() noexcept
+{
   std::unique_lock lock(s_bus->mutex);
 
   // check for driver handle memory
-  if (s_bus->driver_handle == nullptr) {
+  if (s_bus->driver_handle == nullptr)
+  {
     // allocate memory for bus driver
     s_bus->driver_handle = vigem_alloc();
-    if (s_bus->driver_handle == nullptr) {
+    if (s_bus->driver_handle == nullptr)
+    {
       return W_FAILURE(std::errc::not_enough_memory, "could not allocate memory for ViGem client");
     }
   }
 
   // connect to vigem
   const auto _ret = vigem_connect(s_bus->driver_handle);
-  if (_ret != VIGEM_ERROR_NONE) {
+  if (_ret != VIGEM_ERROR_NONE)
+  {
     // release it
     fini();
     return _ret;
@@ -32,16 +36,19 @@ boost::leaf::result<VIGEM_ERROR> w_gamepad_virtual_pool::init() noexcept {
   return _ret;
 }
 
-boost::leaf::result<w_gamepad_virtual> w_gamepad_virtual_pool::add() noexcept {
+boost::leaf::result<w_gamepad_virtual> w_gamepad_virtual_pool::add() noexcept
+{
   auto _gamepad = w_gamepad_virtual(s_bus);
   BOOST_LEAF_AUTO(init_res, _gamepad.init());
   return _gamepad;
 }
 
-void w_gamepad_virtual_pool::fini() noexcept {
+void w_gamepad_virtual_pool::fini() noexcept
+{
   std::unique_lock lock(s_bus->mutex);
 
-  if (s_bus->driver_handle) {
+  if (s_bus->driver_handle)
+  {
     vigem_disconnect(s_bus->driver_handle);
     vigem_free(s_bus->driver_handle);
     s_bus->driver_handle = nullptr;
@@ -49,8 +56,10 @@ void w_gamepad_virtual_pool::fini() noexcept {
 }
 
 std::string w_gamepad_virtual_pool::vigem_error_to_string(
-    _In_ const VIGEM_ERROR p_error) noexcept {
-  switch (p_error) {
+    _In_ const VIGEM_ERROR p_error) noexcept
+{
+  switch (p_error)
+  {
   default:
     // API succeeded
     return "VIGEM_ERROR_NONE";
@@ -101,7 +110,7 @@ std::string w_gamepad_virtual_pool::vigem_error_to_string(
   case VIGEM_ERROR::VIGEM_ERROR_NOT_SUPPORTED:
     return "VIGEM_ERROR_NOT_SUPPORTED: the API is not supported by the driver";
   case VIGEM_ERROR::VIGEM_ERROR_WINAPI:
-    return "VIGEM_ERROR_WINAPI: an unexpected Win32 API error occurred. Call "
+    return "VIGEM_ERROR_WINAPI: an unexpected WIN64 API error occurred. Call "
            "GetLastError() for details";
   case VIGEM_ERROR::VIGEM_ERROR_TIMED_OUT:
     return "VIGEM_ERROR_TIMED_OUT: the specified timeout has been reached";
@@ -109,6 +118,3 @@ std::string w_gamepad_virtual_pool::vigem_error_to_string(
 }
 
 #endif // #if defined(WOLF_SYSTEM_VIRTUAL_GAMEPAD) && !defined(EMSCRIPTEN)
-
-
-

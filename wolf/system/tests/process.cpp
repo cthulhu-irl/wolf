@@ -8,7 +8,7 @@
 #include <boost/test/unit_test.hpp>
 #include <system/w_leak_detector.hpp>
 #include <system/w_process.hpp>
-#include <wolf/wolf.hpp>
+#include <wolf.hpp>
 
 BOOST_AUTO_TEST_CASE(process_current_path_test)
 {

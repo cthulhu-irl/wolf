@@ -12,7 +12,7 @@ if (WOLF_SYSTEM_LZ4)
             ${WOLF_SYSTEM_LZ4_SOURCES}
     )
 
-    vcpkg_install_force(lz4)
+    vcpkg_install(lz4)
     find_package(lz4 CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PUBLIC lz4::lz4)
 endif()

@@ -64,7 +64,7 @@ if (WOLF_SYSTEM_GAMEPAD_CLIENT)
 endif()
 
 if (WOLF_SYSTEM_GAMEPAD_VIRTUAL)
-    if (NOT WIN32)
+    if (NOT WIN64)
         message(FATAL_ERROR "WOLF_SYSTEM_GAMEPAD_VIRTUAL is only supported for windows.")
     endif()
 

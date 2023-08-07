@@ -14,7 +14,7 @@ if (WOLF_SYSTEM_SOCKET)
             ${WOLF_SYSTEM_SOCKET_SOURCES}
     )
 
-    vcpkg_install_force(boost-asio)
+    vcpkg_install(boost-asio)
     find_package(Boost ${BOOST_VERSION} REQUIRED)
     target_link_libraries(${PROJECT_NAME} PUBLIC Boost::boost)
 endif()
@@ -39,7 +39,7 @@ if (WOLF_SYSTEM_HTTP_WS)
             ${WOLF_SYSTEM_HTTP_WS_SOURCES}
     )
 
-    vcpkg_install_force(boost-asio)
+    vcpkg_install(boost-asio)
     find_package(Boost ${BOOST_VERSION} REQUIRED)
     target_link_libraries(${PROJECT_NAME} PUBLIC Boost::boost)
 endif()

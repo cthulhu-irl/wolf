@@ -12,18 +12,20 @@
 
 #include "tests/common.hpp"
 
-BOOST_AUTO_TEST_CASE(avframe_test) {
+BOOST_AUTO_TEST_CASE(avframe_test)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   std::cout << "entering test case 'avframe_test'" << std::endl;
 
   boost::leaf::try_handle_all(
-      [&]() -> boost::leaf::result<void> {
+      [&]() -> boost::leaf::result<void>
+      {
         using w_av_frame = wolf::media::ffmpeg::w_av_frame;
         using w_av_config = wolf::media::ffmpeg::w_av_config;
 
         // create av frame from img
-        const std::filesystem::path path = get_content_path("texture/rgb.png");
+        const std::filesystem::path path = wolf::get_content_path("texture/rgb.png");
 
         BOOST_LEAF_AUTO(_src_frame, w_av_frame::load_video_frame_from_img_file(
                                         path, AVPixelFormat::AV_PIX_FMT_RGBA));
@@ -41,12 +43,14 @@ BOOST_AUTO_TEST_CASE(avframe_test) {
 
         return {};
       },
-      [](const w_trace &p_trace) {
+      [](const w_trace &p_trace)
+      {
         const auto _msg =
             wolf::format("avframe_test got an error: {}", p_trace.to_string());
         BOOST_ERROR(_msg);
       },
-      [] { BOOST_ERROR("avframe_test got an error!"); });
+      []
+      { BOOST_ERROR("avframe_test got an error!"); });
 
   std::cout << "leaving test case 'avframe_test'" << std::endl;
 }

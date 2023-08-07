@@ -3,8 +3,8 @@
   https://github.com/WolfEngine/wolf
 */
 
-#include <wolf/system/w_leak_detector.hpp>
-#include <wolf/wolf.hpp>
+#include <system/w_leak_detector.hpp>
+#include <wolf.hpp>
 
 #define BOOST_TEST_MODULE wolf_tests
 #include <boost/test/included/unit_test.hpp>
@@ -12,7 +12,8 @@
 #include <filesystem>
 #include <string_view>
 
-BOOST_AUTO_TEST_CASE(init) {
+BOOST_AUTO_TEST_CASE(init)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   std::cout << "entering test case 'wolf_test'" << std::endl;

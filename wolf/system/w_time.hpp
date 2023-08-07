@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <wolf/wolf.hpp>
+#include <wolf.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 using namespace boost::asio::experimental::awaitable_operators;

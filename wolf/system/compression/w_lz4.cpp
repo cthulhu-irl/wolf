@@ -2,22 +2,36 @@
 
 #ifdef WOLF_SYSTEM_LZ4
 
-#include <DISABLE_ANALYSIS_BEGIN>
+// NOLINTBEGIN
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : ALL_CODE_ANALYSIS_WARNINGS)
+#endif
+
 #include <lz4.h>
-#include <DISABLE_ANALYSIS_END>
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+// NOLINTEND
 
 using w_lz4 = wolf::system::compression::w_lz4;
 
 static boost::leaf::result<int>
-s_check_input_len(_In_ const size_t p_src_size) noexcept {
-  if (p_src_size < LZ4_MAX_INPUT_SIZE) {
+s_check_input_len(_In_ const size_t p_src_size) noexcept
+{
+  if (p_src_size < LZ4_MAX_INPUT_SIZE)
+  {
     return 0;
   }
 
   std::string _src_size_msg;
-  try {
+  try
+  {
     _src_size_msg = std::to_string(LZ4_MAX_INPUT_SIZE);
-  } catch (...) {
+  }
+  catch (...)
+  {
   }
   return W_FAILURE(std::errc::invalid_argument,
                    "source size is greater than LZ4_MAX_INPUT_SIZE: " +
@@ -25,7 +39,8 @@ s_check_input_len(_In_ const size_t p_src_size) noexcept {
 }
 
 static std::vector<std::byte>
-s_shrink_to_fit(_In_ const std::vector<std::byte> &p_src, _In_ const size_t p_shrink_size) noexcept {
+s_shrink_to_fit(_In_ const std::vector<std::byte> &p_src, _In_ const size_t p_shrink_size) noexcept
+{
   std::vector<std::byte> _dst;
   _dst.resize(p_shrink_size);
 
@@ -33,14 +48,17 @@ s_shrink_to_fit(_In_ const std::vector<std::byte> &p_src, _In_ const size_t p_sh
   return _dst;
 }
 
-int w_lz4::get_compress_bound(_In_ int p_size) noexcept {
+int w_lz4::get_compress_bound(_In_ int p_size) noexcept
+{
   return LZ4_compressBound(p_size);
 }
 
 boost::leaf::result<std::vector<std::byte>>
-w_lz4::compress_default(_In_ const gsl::span<const std::byte> p_src) noexcept {
+w_lz4::compress_default(_In_ const gsl::span<const std::byte> p_src) noexcept
+{
   const auto _src_size = p_src.size();
-  if (_src_size == 0) {
+  if (_src_size == 0)
+  {
     return W_FAILURE(std::errc::invalid_argument, "the source is empty");
   }
 
@@ -53,7 +71,8 @@ w_lz4::compress_default(_In_ const gsl::span<const std::byte> p_src) noexcept {
   const auto _bytes =
       LZ4_compress_default(reinterpret_cast<const char *>(p_src.data()), reinterpret_cast<char *>(_tmp.data()),
                            gsl::narrow_cast<int>(_src_size), _dst_capacity);
-  if (_bytes > 0) {
+  if (_bytes > 0)
+  {
     return s_shrink_to_fit(_tmp, _bytes);
   }
 
@@ -63,9 +82,11 @@ w_lz4::compress_default(_In_ const gsl::span<const std::byte> p_src) noexcept {
 
 boost::leaf::result<std::vector<std::byte>>
 w_lz4::compress_fast(_In_ const gsl::span<const std::byte> p_src,
-                     _In_ const int p_acceleration) noexcept {
+                     _In_ const int p_acceleration) noexcept
+{
   const auto _src_size = p_src.size();
-  if (_src_size == 0) {
+  if (_src_size == 0)
+  {
     return W_FAILURE(std::errc::invalid_argument, "the source is empty");
   }
 
@@ -78,7 +99,8 @@ w_lz4::compress_fast(_In_ const gsl::span<const std::byte> p_src,
   const auto _bytes = LZ4_compress_fast(
       reinterpret_cast<const char *>(p_src.data()), reinterpret_cast<char *>(_tmp.data()),
       gsl::narrow_cast<int>(_src_size), _dst_capacity, p_acceleration);
-  if (_bytes > 0) {
+  if (_bytes > 0)
+  {
     return s_shrink_to_fit(_tmp, _bytes);
   }
 
@@ -87,9 +109,11 @@ w_lz4::compress_fast(_In_ const gsl::span<const std::byte> p_src,
 
 boost::leaf::result<std::vector<std::byte>>
 w_lz4::decompress(_In_ const gsl::span<const std::byte> p_src,
-                  _In_ const size_t p_max_retry) noexcept {
+                  _In_ const size_t p_max_retry) noexcept
+{
   const auto _src_size = p_src.size();
-  if (_src_size == 0) {
+  if (_src_size == 0)
+  {
     return W_FAILURE(std::errc::invalid_argument, "the source is empty");
   }
 
@@ -100,14 +124,16 @@ w_lz4::decompress(_In_ const gsl::span<const std::byte> p_src,
 #ifdef __clang
 #pragma unroll
 #endif
-  for (auto i = 0; i < p_max_retry; ++i) {
+  for (auto i = 0; i < p_max_retry; ++i)
+  {
     // resize it for next round
     _tmp.resize(_resize);
 
     const auto _bytes = LZ4_decompress_safe(
         reinterpret_cast<const char *>(p_src.data()), reinterpret_cast<char *>(_tmp.data()),
         gsl::narrow_cast<int>(_src_size), gsl::narrow_cast<int>(_tmp.size()));
-    if (_bytes > 0) {
+    if (_bytes > 0)
+    {
       return s_shrink_to_fit(_tmp, _bytes);
     }
 
@@ -115,9 +141,12 @@ w_lz4::decompress(_In_ const gsl::span<const std::byte> p_src,
   }
 
   std::string _max_retry_str;
-  try {
+  try
+  {
     _max_retry_str = std::to_string(p_max_retry);
-  } catch (...) {
+  }
+  catch (...)
+  {
   }
   return W_FAILURE(std::errc::operation_canceled,
                    "could not decompress lz4 stream after " + _max_retry_str);

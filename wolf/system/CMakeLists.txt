@@ -30,7 +30,7 @@ target_sources(${PROJECT_NAME}
 
 if (WOLF_SYSTEM_OPENSSL)
     # no source codes, only link against openssl library.
-    vcpkg_install_force(openssl)
+    vcpkg_install(openssl)
     find_package(OpenSSL REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 endif()

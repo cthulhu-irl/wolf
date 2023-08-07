@@ -24,12 +24,13 @@ s_encode(_In_ const std::string &p_name,
          _In_ std::variant<const char *, AVCodecID> &p_codec_id,
          _In_ const w_av_codec_opt &p_codec_options,
          _In_ const std::vector<w_av_set_opt> &p_av_set_options,
-         _In_ const bool p_flush = true) {
+         _In_ const bool p_flush = true)
+{
   // namespaces
   using w_encoder = wolf::media::ffmpeg::w_encoder;
 
   // create av frame from img
-  auto _img_path = get_content_path("texture/rgb.png");
+  auto _img_path = wolf::get_content_path("texture/rgb.png");
   BOOST_LEAF_AUTO(_src_frame, w_av_frame::load_video_frame_from_img_file(
                                   _img_path, AVPixelFormat::AV_PIX_FMT_RGBA));
 
@@ -40,11 +41,14 @@ s_encode(_In_ const std::string &p_name,
 
   // encode frame to packet
   boost::leaf::result<w_encoder> _encoder_res;
-  if (p_codec_id.index() == 0) {
+  if (p_codec_id.index() == 0)
+  {
     auto _codec_id = std::get<0>(p_codec_id);
     _encoder_res = w_ffmpeg::create_encoder(_dst_config, _codec_id,
                                             p_codec_options, p_av_set_options);
-  } else {
+  }
+  else
+  {
     const auto _codec_id = std::get<1>(p_codec_id);
     _encoder_res = w_ffmpeg::create_encoder(_dst_config, _codec_id,
                                             p_codec_options, p_av_set_options);
@@ -60,7 +64,7 @@ s_encode(_In_ const std::string &p_name,
   auto _packet = w_av_packet();
   BOOST_LEAF_CHECK(_encoder.encode(_yuv_frame, _packet, p_flush));
 
-  const auto _encoded_path = get_content_path(wolf::format("{}_yuv_encoded.png", p_name));
+  const auto _encoded_path = wolf::get_content_path(wolf::format("{}_yuv_encoded.png", p_name));
   BOOST_LEAF_CHECK(_yuv_frame.save_video_frame_to_img_file(_encoded_path));
 
   return std::make_tuple(std::move(_packet), _src_config, _dst_config);
@@ -72,7 +76,8 @@ static boost::leaf::result<void> s_decode(
     _In_ std::variant<const char *, AVCodecID> &p_codec_id,
     _In_ const w_av_codec_opt &p_codec_options,
     _In_ const std::vector<w_av_set_opt> &p_av_set_options,
-    _In_ const bool p_flush = false) {
+    _In_ const bool p_flush = false)
+{
   using w_decoder = wolf::media::ffmpeg::w_decoder;
 
   // create destination avframe for decoder
@@ -84,12 +89,15 @@ static boost::leaf::result<void> s_decode(
 
   // create a decoder
   boost::leaf::result<w_decoder> _decoder_res;
-  if (p_codec_id.index() == 0) {
+  if (p_codec_id.index() == 0)
+  {
     auto _codec_id = std::get<0>(p_codec_id);
     _decoder_res =
         w_ffmpeg::create_decoder(_decoded_frame.get_config(), _codec_id,
                                  p_codec_options, p_av_set_options);
-  } else {
+  }
+  else
+  {
     const auto _codec_id = std::get<1>(p_codec_id);
     _decoder_res =
         w_ffmpeg::create_decoder(_decoded_frame.get_config(), _codec_id,
@@ -107,20 +115,22 @@ static boost::leaf::result<void> s_decode(
                   _decoded_frame.convert_video(std::forward<w_av_config &&>(
                       std::get<1>(p_encoded_tuple))));
 
-  const auto _path = get_content_path(wolf::format("{}_rgb_encoded.png", p_name));
+  const auto _path = wolf::get_content_path(wolf::format("{}_rgb_encoded.png", p_name));
   BOOST_LEAF_CHECK(_decoded_frame.save_video_frame_to_img_file(_path));
 
   return {};
 }
 
-BOOST_AUTO_TEST_CASE(av1_encode_decode_test) {
+BOOST_AUTO_TEST_CASE(av1_encode_decode_test)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   constexpr auto _name = "av1";
   std::cout << "entering test case '_encode_decode_test'" << std::endl;
 
   boost::leaf::try_handle_all(
-      [&]() -> boost::leaf::result<void> {
+      [&]() -> boost::leaf::result<void>
+      {
         const auto _codec_opt = w_av_codec_opt{
             4'000'000, /*bitrate*/
             60,        /*fps*/
@@ -147,11 +157,13 @@ BOOST_AUTO_TEST_CASE(av1_encode_decode_test) {
 
         return {};
       },
-      [](const w_trace &p_trace) {
+      [](const w_trace &p_trace)
+      {
         const auto _msg = wolf::format("got error: {}", p_trace.to_string());
         BOOST_ERROR(_msg);
       },
-      [] {
+      []
+      {
         const auto _msg = wolf::format("got an error");
         BOOST_ERROR(_msg);
       });
@@ -159,14 +171,16 @@ BOOST_AUTO_TEST_CASE(av1_encode_decode_test) {
   std::cout << "leaving test case 'av1_encode_decode_test'" << std::endl;
 }
 
-BOOST_AUTO_TEST_CASE(vp9_encode_decode_test) {
+BOOST_AUTO_TEST_CASE(vp9_encode_decode_test)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   constexpr auto _name = "vp9";
   std::cout << "entering test case 'vp9_encode_decode_test'" << std::endl;
 
   boost::leaf::try_handle_all(
-      [&]() -> boost::leaf::result<void> {
+      [&]() -> boost::leaf::result<void>
+      {
         const auto _codec_opt = w_av_codec_opt{
             4'000'000, /*bitrate*/
             60,        /*fps*/
@@ -190,11 +204,13 @@ BOOST_AUTO_TEST_CASE(vp9_encode_decode_test) {
 
         return {};
       },
-      [](const w_trace &p_trace) {
+      [](const w_trace &p_trace)
+      {
         const auto _msg = wolf::format("got error: {}", p_trace.to_string());
         BOOST_ERROR(_msg);
       },
-      [] {
+      []
+      {
         const auto _msg = wolf::format("got an error");
         BOOST_ERROR(_msg);
       });
@@ -202,14 +218,16 @@ BOOST_AUTO_TEST_CASE(vp9_encode_decode_test) {
   std::cout << "leaving test case 'vp9_encode_decode_test'" << std::endl;
 }
 
-BOOST_AUTO_TEST_CASE(x264_encode_decode_test) {
+BOOST_AUTO_TEST_CASE(x264_encode_decode_test)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   constexpr auto _name = "x264";
   std::cout << "entering test case 'x264_encode_decode_test'" << std::endl;
 
   boost::leaf::try_handle_all(
-      [&]() -> boost::leaf::result<void> {
+      [&]() -> boost::leaf::result<void>
+      {
         const auto _codec_opt = w_av_codec_opt{
             4'000'000, /*bitrate*/
             60,        /*fps*/
@@ -235,11 +253,13 @@ BOOST_AUTO_TEST_CASE(x264_encode_decode_test) {
 
         return {};
       },
-      [](const w_trace &p_trace) {
+      [](const w_trace &p_trace)
+      {
         const auto _msg = wolf::format("got error: {}", p_trace.to_string());
         BOOST_ERROR(_msg);
       },
-      [] {
+      []
+      {
         const auto _msg = wolf::format("got an error");
         BOOST_ERROR(_msg);
       });

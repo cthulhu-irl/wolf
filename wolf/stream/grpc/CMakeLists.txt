@@ -16,7 +16,7 @@ target_sources(${PROJECT_NAME}
         ${WOLF_STREAM_GRPC_SOURCES}
 )
 
-vcpkg_install_force(asio-grpc)
+vcpkg_install(asio-grpc)
 find_package(asio-grpc CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC asio-grpc::asio-grpc)
 

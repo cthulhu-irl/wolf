@@ -11,9 +11,10 @@
 #include <system/log/w_log.hpp>
 #include <system/w_leak_detector.hpp>
 #include <system/w_process.hpp>
-#include <wolf/wolf.hpp>
+#include <wolf.hpp>
 
-BOOST_AUTO_TEST_CASE(log_stress_test) {
+BOOST_AUTO_TEST_CASE(log_stress_test)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   std::cout << "entering test case 'log_stress_test'" << std::endl;
@@ -56,7 +57,8 @@ BOOST_AUTO_TEST_CASE(log_stress_test) {
 
   w_log _log(std::move(_config));
   const auto _ret = _log.init();
-  if (_ret.has_error() == true) {
+  if (_ret.has_error() == true)
+  {
     return;
   }
 
@@ -67,8 +69,10 @@ BOOST_AUTO_TEST_CASE(log_stress_test) {
   const auto _max_loop = _rand_gen(_rand_engine);
 
   std::vector<std::thread> threads;
-  for (size_t i = 0; i < _max_loop; ++i) {
-    threads.push_back(std::thread([&_log, i]() {
+  for (size_t i = 0; i < _max_loop; ++i)
+  {
+    threads.push_back(std::thread([&_log, i]()
+                                  {
       // get thread id
       std::stringstream _sstream;
       _sstream << std::this_thread::get_id();
@@ -90,15 +94,15 @@ BOOST_AUTO_TEST_CASE(log_stress_test) {
         if (_delta > _max_delta_in_sec) {
           break;
         }
-      }
-    }));
+      } }));
   }
 
-  for (auto &t : threads) {
+  for (auto &t : threads)
+  {
     t.join();
   }
 
   std::cout << "leaving test case 'log_stress_test'" << std::endl;
 }
 
-#endif  // defined(WOLF_TEST) && defined(WOLF_SYSTEM_LOG)
+#endif // defined(WOLF_TEST) && defined(WOLF_SYSTEM_LOG)

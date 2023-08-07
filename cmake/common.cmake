@@ -21,7 +21,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     endif()
 endif()
 
-if (MSVC AND NOT WIN64)
+if (WIN32 AND NOT WIN64)
     message(FATAL_ERROR "Only Window 64 bit is supported")
 endif()
 

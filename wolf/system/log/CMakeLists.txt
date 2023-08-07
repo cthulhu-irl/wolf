@@ -11,7 +11,7 @@ if (WOLF_SYSTEM_LOG)
             ${WOLF_SYSTEM_LOG_SOURCES}
     )
 
-    vcpkg_install_force(spdlog)
+    vcpkg_install(spdlog)
     find_package(spdlog CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PUBLIC spdlog::spdlog spdlog::spdlog_header_only)
 endif()

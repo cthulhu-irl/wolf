@@ -5,7 +5,7 @@ if (WOLF_SYSTEM_POSTGRESQL)
         message(FATAL_ERROR "WOLF_SYSTEM_POSTGRESQL is not supported for the wasm32 target on Emscripten")
     endif()
 
-    vcpkg_install_force(libpq)
+    vcpkg_install(libpq)
     find_package(PostgreSQL REQUIRED)
 
     set(WOLF_SYSTEM_POSTGRESQL_HEADERS w_postgresql.hpp)
@@ -38,7 +38,7 @@ if (WOLF_SYSTEM_REDIS)
         message(FATAL_ERROR "WOLF_SYSTEM_REDIS requires WOLF_SYSTEM_OPENSSL")
     endif()
 
-    vcpkg_install_force(boost-json)
+    vcpkg_install(boost-json)
 
     message("fetching https://github.com/boostorg/redis.git")
     FetchContent_Declare(

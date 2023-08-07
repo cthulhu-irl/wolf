@@ -7,134 +7,139 @@
 
 #pragma once
 
-#include <wolf/wolf.hpp>
+#include <wolf.hpp>
 
 #include "w_av_config.hpp"
 
-extern "C" {
+extern "C"
+{
 #include <libavformat/avformat.h>
 }
 
 #include <vector>
 
-namespace wolf::media::ffmpeg {
+namespace wolf::media::ffmpeg
+{
 
-class w_decoder;
-class w_encoder;
+  class w_decoder;
+  class w_encoder;
 
-class w_av_frame {
-  friend w_decoder;
-  friend w_encoder;
+  class w_av_frame
+  {
+    friend w_decoder;
+    friend w_encoder;
 
- public:
-  /**
-   * constructor the av_frame with specific config
-   * @param p_config, the av audio config
-   */
-  W_API explicit w_av_frame(_In_ w_av_config &&p_config) noexcept;
+  public:
+    /**
+     * constructor the av_frame with specific config
+     * @param p_config, the av audio config
+     */
+    W_API explicit w_av_frame(_In_ w_av_config &&p_config) noexcept;
 
-  // destructor
-  W_API virtual ~w_av_frame() noexcept { _release(); }
+    // destructor
+    W_API virtual ~w_av_frame() noexcept { _release(); }
 
-  // move constructor.
-  W_API w_av_frame(w_av_frame &&p_other) noexcept {
-    _move(std::forward<w_av_frame &&>(p_other));
-  }
-  // move assignment operator.
-  W_API w_av_frame &operator=(w_av_frame &&p_other) noexcept {
-    _move(std::forward<w_av_frame &&>(p_other));
-    return *this;
-  }
+    // move constructor.
+    W_API w_av_frame(w_av_frame &&p_other) noexcept
+    {
+      _move(std::forward<w_av_frame &&>(p_other));
+    }
+    // move assignment operator.
+    W_API w_av_frame &operator=(w_av_frame &&p_other) noexcept
+    {
+      _move(std::forward<w_av_frame &&>(p_other));
+      return *this;
+    }
 
-  /**
-   * initialize the avframe
-   * @returns zero on success
-   */
-  W_API
-  boost::leaf::result<int> init() noexcept;
+    /**
+     * initialize the avframe
+     * @returns zero on success
+     */
+    W_API
+    boost::leaf::result<int> init() noexcept;
 
-  /**
-   * set the AVFrame data
-   * @param p_data, the initial data of ffmpeg AVFrame
-   * @param p_alignment, the alignment
-   * @returns zero on success
-   */
-  W_API boost::leaf::result<int> set_video_frame(
-      _Inout_ std::vector<uint8_t> &&p_data) noexcept;
+    /**
+     * set the AVFrame data
+     * @param p_data, the initial data of ffmpeg AVFrame
+     * @param p_alignment, the alignment
+     * @returns zero on success
+     */
+    W_API boost::leaf::result<int> set_video_frame(
+        _Inout_ std::vector<uint8_t> &&p_data) noexcept;
 
-  /**
-   * set the AVFrame's pts
-   * @param p_pts, the pts data
-   * @returns void
-   */
-  W_API void set_pts(_In_ int64_t p_pts) noexcept;
+    /**
+     * set the AVFrame's pts
+     * @param p_pts, the pts data
+     * @returns void
+     */
+    W_API void set_pts(_In_ int64_t p_pts) noexcept;
 
-  /**
-   * get data and linesize as a tuple
-   * @returns tuple<int*[8], int[8]>
-   */
-  W_API
-  std::tuple<uint8_t **, int> get() const noexcept;
+    /**
+     * get data and linesize as a tuple
+     * @returns tuple<int*[8], int[8]>
+     */
+    W_API
+    std::tuple<uint8_t **, int> get() const noexcept;
 
-  /**
-   * convert the ffmpeg video AVFrame
-   * @returns the converted instance of AVFrame
-   */
-  W_API
-  boost::leaf::result<w_av_frame> convert_video(
-      _In_ w_av_config &&p_dst_config);
+    /**
+     * convert the ffmpeg video AVFrame
+     * @returns the converted instance of AVFrame
+     */
+    W_API
+    boost::leaf::result<w_av_frame> convert_video(
+        _In_ w_av_config &&p_dst_config);
 
-  /**
-   * convert the ffmpeg audio AVFrame
-   * @returns the converted instance of AVFrame
-   */
-  W_API
-  boost::leaf::result<w_av_frame> convert_audio(
-      _In_ w_av_config &&p_dst_config);
+    /**
+     * convert the ffmpeg audio AVFrame
+     * @returns the converted instance of AVFrame
+     */
+    W_API
+    boost::leaf::result<w_av_frame> convert_audio(
+        _In_ w_av_config &&p_dst_config);
 
-  /**
-   * @returns config
-   */
-  W_API w_av_config get_config() const noexcept;
+    /**
+     * @returns config
+     */
+    W_API w_av_config get_config() const noexcept;
 
-  /**
-   * create w_av_frame from image file path
-   * @returns the AVFrame
-   */
-  W_API
-  static boost::leaf::result<w_av_frame> load_video_frame_from_img_file(
-      _In_ const std::filesystem::path &p_path, _In_ AVPixelFormat p_pixel_fmt);
+    /**
+     * create w_av_frame from image file path
+     * @returns the AVFrame
+     */
+    W_API
+    static boost::leaf::result<w_av_frame> load_video_frame_from_img_file(
+        _In_ const std::filesystem::path &p_path, _In_ AVPixelFormat p_pixel_fmt);
 
-  /**
-   * save to to the image file
-   * @param p_quality, quality will be used only for jpeg and is between 1 and
-   * 100
-   * @returns zero on success
-   */
-  W_API
-  boost::leaf::result<int> save_video_frame_to_img_file(
-      _In_ const std::filesystem::path &p_path, int p_quality = 100) noexcept;
+    /**
+     * save to to the image file
+     * @param p_quality, quality will be used only for jpeg and is between 1 and
+     * 100
+     * @returns zero on success
+     */
+    W_API
+    boost::leaf::result<int> save_video_frame_to_img_file(
+        _In_ const std::filesystem::path &p_path, int p_quality = 100) noexcept;
 
- private:
-  // copy constructor.
-  w_av_frame(const w_av_frame &) = delete;
-  // copy assignment operator.
-  w_av_frame &operator=(const w_av_frame &) = delete;
+  private:
+    // copy constructor.
+    w_av_frame(const w_av_frame &) = delete;
+    // copy assignment operator.
+    w_av_frame &operator=(const w_av_frame &) = delete;
 
-  // release
-  void _release() noexcept;
-  // move
-  void _move(w_av_frame &&p_other) noexcept;
+    // release
+    void _release() noexcept;
+    // move
+    void _move(w_av_frame &&p_other) noexcept;
 
-  // the channel layout of the audio
-  AVChannelLayout _channel_layout = {};
-  // the AVFrame config
-  w_av_config _config = {};
-  // the ffmpeg AVFrame
-  gsl::owner<AVFrame *> _av_frame = nullptr;
-  // the ffmpeg AVFrame data
-  std::vector<uint8_t> _data = {};
-};
-}  // namespace wolf::media::ffmpeg
+    // the channel layout of the audio
+    AVChannelLayout _channel_layout = {};
+    // the AVFrame config
+    w_av_config _config = {};
+    // the ffmpeg AVFrame
+    gsl::owner<AVFrame *> _av_frame = nullptr;
+    // the ffmpeg AVFrame data
+    std::vector<uint8_t> _data = {};
+  };
+} // namespace wolf::media::ffmpeg
 
-#endif  // WOLF_MEDIA_FFMPEG
+#endif // WOLF_MEDIA_FFMPEG

@@ -15,7 +15,8 @@
 
 #include "tests/common.hpp"
 
-BOOST_AUTO_TEST_CASE(openal_play_wav) {
+BOOST_AUTO_TEST_CASE(openal_play_wav)
+{
   using wolf::media::w_openal;
   using wolf::media::w_openal_config;
 
@@ -26,7 +27,7 @@ BOOST_AUTO_TEST_CASE(openal_play_wav) {
   auto a = w_openal();
   a.init(w_openal_config{});
 
-  std::filesystem::path _current_dir = get_content_path("audio/sine.wav");
+  std::filesystem::path _current_dir = wolf::get_content_path("audio/sine.wav");
   std::cout << "sine wave path: " << _current_dir.string() << std::endl;
 
   BOOST_REQUIRE(std::filesystem::exists(_current_dir) == true);

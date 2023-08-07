@@ -3,9 +3,18 @@
 #include "w_gamepad_client.hpp"
 #include "w_gamepad_client_keymap.hpp"
 
-#include <DISABLE_ANALYSIS_BEGIN>
+// NOLINTBEGIN
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : ALL_CODE_ANALYSIS_WARNINGS)
+#endif
+
 #include <emscripten/html5.h>
-#include <DISABLE_ANALYSIS_END>
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+// NOLINTEND
 
 using w_gamepad_client = wolf::system::gamepad::w_gamepad_client;
 using w_gamepad_event = wolf::system::gamepad::w_gamepad_event;
@@ -13,22 +22,24 @@ using w_gamepad_event = wolf::system::gamepad::w_gamepad_event;
 std::vector<EmscriptenGamepadEvent> gamepads;
 std::vector<w_gamepad_event> w_gamepad_client::_events;
 
-EM_BOOL gamepadconnected_callback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData) {
+EM_BOOL gamepadconnected_callback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData)
+{
   gamepads.push_back(*gamepadEvent);
   reinterpret_cast<w_gamepad_client *>(userData)->update();
 
   return EM_TRUE;
 }
 
-EM_BOOL gamepaddisconnected_callback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData) {
-  std::erase_if(gamepads, [gamepadEvent](const auto &e) {
-    return gamepadEvent->index == e.index;
-  });
+EM_BOOL gamepaddisconnected_callback(int eventType, const EmscriptenGamepadEvent *gamepadEvent, void *userData)
+{
+  std::erase_if(gamepads, [gamepadEvent](const auto &e)
+                { return gamepadEvent->index == e.index; });
 
   return EM_TRUE;
 }
 
-boost::leaf::result<int> w_gamepad_client::init() noexcept {
+boost::leaf::result<int> w_gamepad_client::init() noexcept
+{
   // TODO: callback registration may fail, check for EMSCRIPTEN_RESULT_SUCCESS
   emscripten_set_gamepadconnected_callback(this, EM_TRUE,
                                            gamepadconnected_callback);
@@ -38,24 +49,30 @@ boost::leaf::result<int> w_gamepad_client::init() noexcept {
   return S_OK;
 }
 
-void w_gamepad_client::update() {
+void w_gamepad_client::update()
+{
   emscripten_sample_gamepad_data();
 
-  for (auto &gamepad : gamepads) {
+  for (auto &gamepad : gamepads)
+  {
     EmscriptenGamepadEvent gamepadState;
     auto result = emscripten_get_gamepad_status(gamepad.index, &gamepadState);
 
-    if (result != EMSCRIPTEN_RESULT_SUCCESS) {
+    if (result != EMSCRIPTEN_RESULT_SUCCESS)
+    {
       continue;
     }
 
     if (gamepadState.timestamp != 0 &&
-        gamepadState.timestamp == gamepad.timestamp) {
+        gamepadState.timestamp == gamepad.timestamp)
+    {
       continue;
     }
 
-    for (int i = 0; i < gamepadState.numButtons; i++) {
-      if (gamepad.digitalButton[i] == gamepadState.digitalButton[i]) {
+    for (int i = 0; i < gamepadState.numButtons; i++)
+    {
+      if (gamepad.digitalButton[i] == gamepadState.digitalButton[i])
+      {
         continue;
       }
 
@@ -70,8 +87,10 @@ void w_gamepad_client::update() {
       _events.emplace_back(event);
     }
 
-    for (int i = 0; i < gamepadState.numAxes; i++) {
-      if (gamepad.axis[i] == gamepadState.axis[i]) {
+    for (int i = 0; i < gamepadState.numAxes; i++)
+    {
+      if (gamepad.axis[i] == gamepadState.axis[i])
+      {
         continue;
       }
 
@@ -88,7 +107,8 @@ void w_gamepad_client::update() {
   }
 }
 
-void w_gamepad_client::fini() noexcept {
+void w_gamepad_client::fini() noexcept
+{
   this->gamepads.clear();
   this->_events.clear();
 }

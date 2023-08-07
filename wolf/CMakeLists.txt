@@ -12,7 +12,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
-### common options and definitons
+# common options and definitons
 
 if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W3 /bigobj)
@@ -34,7 +34,6 @@ if(MSVC)
         NOMINMAX
         WIN32_LEAN_AND_MEAN
         WIN64
-        WIN32
         _WIN32_WINNT=0x0601 # Windows 7
     )
 elseif(EMSCRIPTEN)
@@ -43,25 +42,25 @@ elseif(APPLE)
     target_compile_definitions(${PROJECT_NAME} PUBLIC NEED_XLOCALE_H=1)
 endif()
 
-### primary dependencies
+# primary dependencies
 
-vcpkg_install_force(ms-gsl)
+vcpkg_install(ms-gsl)
 find_package(Microsoft.GSL CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC Microsoft.GSL::GSL)
 
-vcpkg_install_force(boost-leaf boost-signals2)
+vcpkg_install(boost-leaf boost-signals2)
 find_package(Boost ${BOOST_VERSION} REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC Boost::boost)
 
 if (NOT MSVC AND NOT EMSCRIPTEN)
-    vcpkg_install_force(fmt)
+    vcpkg_install(fmt)
     find_package(fmt REQUIRED)
     target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt-header-only)
 endif()
 
-### modules
+# modules
 
 add_subdirectory(system)
 add_subdirectory(media)
 add_subdirectory(stream)
-# TODO add_subdirectory(ml)
+# TODO(PooyaEimandar): add_subdirectory(ml)

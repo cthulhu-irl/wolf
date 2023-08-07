@@ -15,7 +15,7 @@
 #include <codeanalysis\warnings.h>
 #endif
 
-#ifdef WIN32
+#ifdef WIN64
 #include <Windows.h>
 #endif
 
@@ -30,6 +30,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 #ifdef _MSC_VER
 #include <format>
@@ -45,25 +46,30 @@ constexpr auto W_MAX_BUFFER_SIZE = 1024;
 
 #define DEFER auto _ = std::shared_ptr<void>(nullptr, [&](...)
 
-struct w_buffer {
+struct w_buffer
+{
   w_buffer() noexcept = default;
 
   explicit w_buffer(const std::string_view p_str) { from_string(p_str); }
 
   w_buffer(std::array<char, W_MAX_BUFFER_SIZE> &&p_array,
-           const size_t p_used_bytes) noexcept {
+           const size_t p_used_bytes) noexcept
+  {
     this->buf = std::move(p_array);
     this->used_bytes = p_used_bytes;
   }
 
-  void from_string(const std::string_view p_str) {
+  void from_string(const std::string_view p_str)
+  {
     const auto _size = p_str.size();
     this->used_bytes = _size > 1024 ? 1024 : _size;
     std::copy(p_str.cbegin(), p_str.cbegin() + this->used_bytes, buf.begin());
   }
 
-  std::string to_string() {
-    if (this->buf.size() && this->used_bytes) {
+  std::string to_string()
+  {
+    if (this->buf.size() && this->used_bytes)
+    {
       return std::string(this->buf.data(), this->used_bytes);
     }
     return std::string();
@@ -111,23 +117,31 @@ struct w_buffer {
 
 #include <wolf/system/w_trace.hpp>
 
-namespace wolf {
-template <class T>
-using w_function = ofats::any_invocable<T>;
-using w_binary = std::vector<std::byte>;
+namespace wolf
+{
+  template <class T>
+  using w_function = ofats::any_invocable<T>;
+  using w_binary = std::vector<std::byte>;
 
-/**
- * returns wolf version
- * @return string format with the following style
- * "<major>.<minor>.<patch>.<debug>"
- */
-W_API std::string w_init();
+  /**
+   * returns wolf version
+   * @return string format with the following style
+   * "<major>.<minor>.<patch>.<debug>"
+   */
+  W_API std::string w_init();
 
-/*
- * get environment variable
- * @param p_env, the env name
- */
-W_API std::string get_env(const std::string_view p_env);
+  /*
+   * get environment variable
+   * @param p_env, the env name
+   */
+  W_API std::string get_env(const std::string_view p_env);
+
+  /*
+   * get wolf content path
+   * @param p_subpath, the subpath of content folder
+   */
+  W_API std::filesystem::path get_content_path(
+      const std::string_view p_subpath);
 
 /**
  * make a string via format
@@ -136,8 +150,8 @@ W_API std::string get_env(const std::string_view p_env);
  * @return a string
  */
 #ifdef _MSC_VER
-using std::format;
+  using std::format;
 #else
-using fmt::format;
-#endif  // _MSC_VER
-}  // namespace wolf
+  using fmt::format;
+#endif // _MSC_VER
+} // namespace wolf

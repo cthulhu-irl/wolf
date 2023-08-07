@@ -9,9 +9,10 @@
 #include <mutex>
 #include <system/w_gametime.hpp>
 #include <system/w_leak_detector.hpp>
-#include <wolf/wolf.hpp>
+#include <wolf.hpp>
 
-BOOST_AUTO_TEST_CASE(gametime_fixed_time_test) {
+BOOST_AUTO_TEST_CASE(gametime_fixed_time_test)
+{
   const wolf::system::w_leak_detector _detector = {};
   using w_gametime = wolf::system::w_gametime;
 
@@ -21,7 +22,7 @@ BOOST_AUTO_TEST_CASE(gametime_fixed_time_test) {
   bool _ticked = false;
 
   constexpr double _stop_after_secs = 3.0;
-  constexpr double _target_elapsed_secs = 1.0 / 50.0;  // 50 fps
+  constexpr double _target_elapsed_secs = 1.0 / 50.0; // 50 fps
 
   auto _gametime = w_gametime();
   _gametime.reset();
@@ -32,8 +33,11 @@ BOOST_AUTO_TEST_CASE(gametime_fixed_time_test) {
 #ifdef __clang__
 #pragma unroll
 #endif
-  while (_total_seconds < _stop_after_secs) {
-    _gametime.tick([&]() { std::call_once(_flag, [&]() { _ticked = true; }); });
+  while (_total_seconds < _stop_after_secs)
+  {
+    _gametime.tick([&]()
+                   { std::call_once(_flag, [&]()
+                                    { _ticked = true; }); });
 
     _total_seconds = _gametime.get_total_secs();
   }
@@ -41,7 +45,8 @@ BOOST_AUTO_TEST_CASE(gametime_fixed_time_test) {
   std::cout << "leaving test case 'gametime_fixed_time_test'" << std::endl;
 }
 
-BOOST_AUTO_TEST_CASE(gametime_unfixed_time_test) {
+BOOST_AUTO_TEST_CASE(gametime_unfixed_time_test)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   using w_gametime = wolf::system::w_gametime;
@@ -49,7 +54,7 @@ BOOST_AUTO_TEST_CASE(gametime_unfixed_time_test) {
   std::cout << "entering test case 'gametime_unfixed_time_test'" << std::endl;
 
   constexpr double _stop_after_secs = 5.0;
-  constexpr double _target_elapsed_secs = 1.0 / 50.0;  // 50 fps
+  constexpr double _target_elapsed_secs = 1.0 / 50.0; // 50 fps
 
   auto _gametime = w_gametime();
   _gametime.reset();
@@ -59,7 +64,8 @@ BOOST_AUTO_TEST_CASE(gametime_unfixed_time_test) {
   BOOST_REQUIRE(_gametime.get_fps() == 0);
 
   auto _total_seconds = _gametime.get_total_secs();
-  while (_total_seconds < _stop_after_secs) {
+  while (_total_seconds < _stop_after_secs)
+  {
     _gametime.tick();
     _total_seconds = _gametime.get_total_secs();
   }
@@ -69,4 +75,4 @@ BOOST_AUTO_TEST_CASE(gametime_unfixed_time_test) {
   std::cout << "leaving test case 'gametime_unfixed_time_test'" << std::endl;
 }
 
-#endif  // WOLF_TESTS
+#endif // WOLF_TESTS

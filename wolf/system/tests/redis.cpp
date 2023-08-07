@@ -7,10 +7,11 @@
 
 #include <boost/test/unit_test.hpp>
 #include <system/w_leak_detector.hpp>
-#include <wolf/system/db/w_redis_client.hpp>
-#include <wolf/wolf.hpp>
+#include <system/db/w_redis_client.hpp>
+#include <wolf.hpp>
 
-BOOST_AUTO_TEST_CASE(redis_test) {
+BOOST_AUTO_TEST_CASE(redis_test)
+{
   // const wolf::system::w_leak_detector _detector = {};
 
   std::cout << "entering test case 'redis_test'" << std::endl;
@@ -18,14 +19,16 @@ BOOST_AUTO_TEST_CASE(redis_test) {
   boost::asio::io_context _io;
   boost::asio::co_spawn(
       _io,
-      [&]() -> boost::asio::awaitable<void> {
+      [&]() -> boost::asio::awaitable<void>
+      {
         using w_redis_client = wolf::system::db::w_redis_client;
 
         boost::redis::config _config{};
         w_redis_client _redis(_config);
-        const auto& _ret = co_await _redis.connect();
-        if (!_ret.has_error()) {
-          const auto& res_cmd = co_await _redis.exec("PING");
+        const auto &_ret = co_await _redis.connect();
+        if (!_ret.has_error())
+        {
+          const auto &res_cmd = co_await _redis.exec("PING");
           BOOST_TEST(res_cmd.has_error() == false);
           BOOST_TEST(res_cmd.value() == "PONG");
 
@@ -38,7 +41,7 @@ BOOST_AUTO_TEST_CASE(redis_test) {
                                  boost::redis::ignore_t>
               _resp;
 
-          const auto& _res = co_await _redis.exec(_reqs, _resp);
+          const auto &_res = co_await _redis.exec(_reqs, _resp);
           BOOST_TEST(_res.has_error() == false);
 
           std::cout << "redis reply: " << std::get<1>(_resp).value()
@@ -52,4 +55,4 @@ BOOST_AUTO_TEST_CASE(redis_test) {
   std::cout << "leaving test case 'redis_test'" << std::endl;
 }
 
-#endif  // defined(WOLF_TEST) && defined(WOLF_SYSTEM_REDIS)
+#endif // defined(WOLF_TEST) && defined(WOLF_SYSTEM_REDIS)

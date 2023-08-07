@@ -7,14 +7,14 @@ if (WOLF_SYSTEM_LUA)
             ${WOLF_SYSTEM_LUA_SOURCES}
     )
 
-    vcpkg_install_force(lua sol2)
+    vcpkg_install(lua sol2)
     find_package(lua REQUIRED)
     find_package(sol2 CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PUBLIC lua sol2)
 endif()
 
 if (WOLF_SYSTEM_PYTHON)
-    vcpkg_install_force(boost-python)
+    vcpkg_install(boost-python)
     find_package(Python3 REQUIRED COMPONENTS Development)
     find_package(Boost REQUIRED COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR})
 

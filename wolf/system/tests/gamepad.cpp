@@ -7,7 +7,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include <system/w_leak_detector.hpp>
-#include <wolf/wolf.hpp>
+#include <wolf.hpp>
 
 #ifdef WOLF_SYSTEM_GAMEPAD_CLIENT
 

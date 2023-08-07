@@ -8,7 +8,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <system/w_leak_detector.hpp>
-#include <wolf/wolf.hpp>
+#include <wolf.hpp>
 #include <iostream>
 
 BOOST_AUTO_TEST_CASE(coroutine_test)

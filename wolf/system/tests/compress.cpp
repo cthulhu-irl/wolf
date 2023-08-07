@@ -9,17 +9,19 @@
 #include <system/compression/w_lz4.hpp>
 #include <system/compression/w_lzma.hpp>
 #include <system/w_leak_detector.hpp>
-#include <wolf/wolf.hpp>
+#include <wolf.hpp>
 
 #ifdef WOLF_SYSTEM_LZ4
 
-BOOST_AUTO_TEST_CASE(compress_lz4_test) {
+BOOST_AUTO_TEST_CASE(compress_lz4_test)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   std::cout << "entering test case 'compress_lz4_test'" << std::endl;
 
   boost::leaf::try_handle_all(
-      [&]() -> boost::leaf::result<void> {
+      [&]() -> boost::leaf::result<void>
+      {
         using lz4 = wolf::system::compression::w_lz4;
 
         constexpr auto _mock_compression_data =
@@ -48,27 +50,31 @@ BOOST_AUTO_TEST_CASE(compress_lz4_test) {
 
         return {};
       },
-      [](const w_trace &p_trace) {
+      [](const w_trace &p_trace)
+      {
         const auto _msg = wolf::format("compress_lz4_test got an error : {}",
                                        p_trace.to_string());
         BOOST_ERROR(_msg);
       },
-      [] { BOOST_ERROR("compress_lz4_test got an error!"); });
+      []
+      { BOOST_ERROR("compress_lz4_test got an error!"); });
 
   std::cout << "leaving test case 'compress_lz4_test'" << std::endl;
 }
 
-#endif  // WOLF_SYSTEM_LZ4
+#endif // WOLF_SYSTEM_LZ4
 
 #ifdef WOLF_SYSTEM_LZMA
 
-BOOST_AUTO_TEST_CASE(compress_lzma_test) {
+BOOST_AUTO_TEST_CASE(compress_lzma_test)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   std::cout << "entering test case 'compress_lzma_test'" << std::endl;
 
   boost::leaf::try_handle_all(
-      [&]() -> boost::leaf::result<void> {
+      [&]() -> boost::leaf::result<void>
+      {
         using lzma = wolf::system::compression::w_lzma;
 
         constexpr auto _mock_compression_data =
@@ -92,16 +98,18 @@ BOOST_AUTO_TEST_CASE(compress_lzma_test) {
 
         return {};
       },
-      [](const w_trace &p_trace) {
+      [](const w_trace &p_trace)
+      {
         const auto _msg = wolf::format("compress_lzma_test got an error : {}",
                                        p_trace.to_string());
         BOOST_ERROR(_msg);
       },
-      [] { BOOST_ERROR("compress_lzma_test got an error!"); });
+      []
+      { BOOST_ERROR("compress_lzma_test got an error!"); });
 
   std::cout << "leaving test case 'compress_lzma_test'" << std::endl;
 }
 
-#endif  // WOLF_SYSTEM_LZMA
+#endif // WOLF_SYSTEM_LZMA
 
-#endif  // WOLF_TESTS
+#endif // WOLF_TESTS

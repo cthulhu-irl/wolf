@@ -12,9 +12,10 @@
 #include <system/socket/w_ws_server.hpp>
 #include <system/w_leak_detector.hpp>
 #include <system/w_timer.hpp>
-#include <wolf/wolf.hpp>
+#include <wolf.hpp>
 
-BOOST_AUTO_TEST_CASE(ws_server_timeout_test) {
+BOOST_AUTO_TEST_CASE(ws_server_timeout_test)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   std::cout << "entering leaving test case 'ws_server_timeout_test'"
@@ -29,11 +30,11 @@ BOOST_AUTO_TEST_CASE(ws_server_timeout_test) {
   w_socket_options _opts = {};
   tcp::endpoint _endpoint = {tcp::v4(), 8881};
 
-  auto t1 = std::jthread([&]() {
+  auto t1 = std::jthread([&]()
+                         {
     // stop websocket server after 10
     std::this_thread::sleep_for(10s);
-    _io.stop();
-  });
+    _io.stop(); });
 
   const auto _timeout =
       boost::beast::websocket::stream_base::timeout{// handshake_timeout
@@ -46,14 +47,16 @@ BOOST_AUTO_TEST_CASE(ws_server_timeout_test) {
   w_ws_server::run(
       _io, std::move(_endpoint), _timeout, std::move(_opts),
       [](const std::string &p_conn_id, _Inout_ w_buffer &p_buffer,
-         _Inout_ bool &p_is_binary) -> auto{
+         _Inout_ bool &p_is_binary) -> auto
+      {
         std::cout << "websocket server just got: /'" << p_buffer.to_string()
                   << "/' and " << p_buffer.used_bytes
                   << " bytes from connection id: " << p_conn_id << std::endl;
         return boost::beast::websocket::close_code::normal;
       },
       [](const std::string &p_conn_id,
-         const boost::system::system_error &p_error) {
+         const boost::system::system_error &p_error)
+      {
         std::cout << "connection just got an error: " << p_conn_id
                   << " because of " << p_error.what()
                   << " error code: " << p_error.code() << std::endl;
@@ -63,7 +66,8 @@ BOOST_AUTO_TEST_CASE(ws_server_timeout_test) {
   std::cout << "leaving test case 'ws_server_timeout_test'" << std::endl;
 }
 
-BOOST_AUTO_TEST_CASE(ws_client_timeout_test) {
+BOOST_AUTO_TEST_CASE(ws_client_timeout_test)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   std::cout << "entering test case 'ws_client_timeout_test'" << std::endl;
@@ -79,7 +83,8 @@ BOOST_AUTO_TEST_CASE(ws_client_timeout_test) {
 
   boost::asio::co_spawn(
       _io,
-      [&]() -> boost::asio::awaitable<void> {
+      [&]() -> boost::asio::awaitable<void>
+      {
         // create a websocket client
         auto _client = w_ws_client(_io);
         // setup a timer with 1 nanosecond interval
@@ -226,5 +231,5 @@ BOOST_AUTO_TEST_CASE(ws_client_timeout_test) {
 //   _io.run();
 // }
 
-#endif  // defined(WOLF_TEST) && defined(WOLF_SYSTEM_SOCKET) &&
-        // defined(WOLF_SYSTEM_HTTP_WS)
+#endif // defined(WOLF_TEST) && defined(WOLF_SYSTEM_SOCKET) &&
+       // defined(WOLF_SYSTEM_HTTP_WS)

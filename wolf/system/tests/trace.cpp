@@ -7,37 +7,43 @@
 
 #include <boost/test/unit_test.hpp>
 #include <system/w_leak_detector.hpp>
-#include <wolf/wolf.hpp>
+#include <wolf.hpp>
 
-BOOST_AUTO_TEST_CASE(trace_test) {
+BOOST_AUTO_TEST_CASE(trace_test)
+{
   const wolf::system::w_leak_detector _detector = {};
 
   std::cout << "entering test case 'trace_test'" << std::endl;
 
-  const auto _function_1 = []() noexcept -> boost::leaf::result<void> {
+  const auto _function_1 = []() noexcept -> boost::leaf::result<void>
+  {
     return W_FAILURE(std::errc::bad_message, "error from function 1");
   };
 
-  const auto _function_2 = [&]() noexcept -> boost::leaf::result<void> {
+  const auto _function_2 = [&]() noexcept -> boost::leaf::result<void>
+  {
     return _function_1();
   };
 
   // how to use w_trace
   boost::leaf::try_handle_all(
-      [&]() -> boost::leaf::result<void> {
+      [&]() -> boost::leaf::result<void>
+      {
         BOOST_LEAF_CHECK(_function_2());
         std::cout << "success!" << std::endl;
         BOOST_ERROR(false);
         return {};
       },
-      [](const w_trace &p_trace) {
+      [](const w_trace &p_trace)
+      {
         const auto _msg = wolf::format("caught a test error! trace info: {}",
                                        p_trace.to_string());
         BOOST_WARN_MESSAGE(false, _msg);
       },
-      [] { BOOST_ERROR("trace_test caught an error!"); });
+      []
+      { BOOST_ERROR("trace_test caught an error!"); });
 
   std::cout << "leaving test case 'trace_test'" << std::endl;
 }
 
-#endif  // WOLF_TESTS
+#endif // WOLF_TESTS

@@ -2,11 +2,20 @@
 
 #include "w_tcp_client.hpp"
 
-#include <boost/asio/experimental/awaitable_operators.hpp>
-#include <chrono>
+// NOLINTBEGIN
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : ALL_CODE_ANALYSIS_WARNINGS)
+#endif
 
-#include "DISABLE_ANALYSIS_BEGIN"
-#include "DISABLE_ANALYSIS_END"
+#include <boost/asio/experimental/awaitable_operators.hpp>
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+// NOLINTEND
+
+#include <chrono>
 
 using namespace boost::asio::experimental::awaitable_operators;
 using w_tcp_client = wolf::system::socket::w_tcp_client;
@@ -16,23 +25,29 @@ w_tcp_client::w_tcp_client(boost::asio::io_context &p_io_context) noexcept
     : _resolver(std::make_unique<tcp::resolver>(p_io_context)),
       _socket(std::make_unique<tcp::socket>(p_io_context)) {}
 
-w_tcp_client::~w_tcp_client() noexcept {
-  try {
+w_tcp_client::~w_tcp_client() noexcept
+{
+  try
+  {
     const auto _resolver_nn =
         gsl::not_null<tcp::resolver *>(this->_resolver.get());
     const auto _socket_nn = gsl::not_null<tcp::socket *>(this->_socket.get());
 
     _resolver_nn->cancel();
-    if (_socket_nn->is_open()) {
+    if (_socket_nn->is_open())
+    {
       _socket_nn->close();
     }
     _socket_nn->shutdown(tcp::socket::shutdown_both);
-  } catch (...) {
+  }
+  catch (...)
+  {
   }
 }
 
 boost::asio::awaitable<boost::asio::ip::basic_resolver_results<tcp>>
-w_tcp_client::async_resolve(_In_ const tcp::endpoint &p_endpoint) {
+w_tcp_client::async_resolve(_In_ const tcp::endpoint &p_endpoint)
+{
   const auto _resolver_nn =
       gsl::not_null<tcp::resolver *>(this->_resolver.get());
   return _resolver_nn->async_resolve(p_endpoint, boost::asio::use_awaitable);
@@ -40,7 +55,8 @@ w_tcp_client::async_resolve(_In_ const tcp::endpoint &p_endpoint) {
 
 boost::asio::awaitable<boost::asio::ip::basic_resolver_results<tcp>>
 w_tcp_client::async_resolve(_In_ const std::string &p_address,
-                            _In_ const uint16_t &p_port) {
+                            _In_ const uint16_t &p_port)
+{
   const auto _resolver_nn =
       gsl::not_null<tcp::resolver *>(this->_resolver.get());
 
@@ -51,7 +67,8 @@ w_tcp_client::async_resolve(_In_ const std::string &p_address,
 
 boost::asio::awaitable<void, boost::asio::any_io_executor>
 w_tcp_client::async_connect(_In_ const tcp::endpoint &p_endpoint,
-                            _In_ const w_socket_options &p_socket_options) {
+                            _In_ const w_socket_options &p_socket_options)
+{
   const gsl::not_null<tcp::socket *> _socket_nn(this->_socket.get());
 
   // get protocol
@@ -71,7 +88,8 @@ w_tcp_client::async_connect(_In_ const tcp::endpoint &p_endpoint,
 }
 
 boost::asio::awaitable<size_t> w_tcp_client::async_write(
-    _In_ const w_buffer &p_buffer) {
+    _In_ const w_buffer &p_buffer)
+{
   const gsl::not_null<tcp::socket *> _socket_nn(this->_socket.get());
 
   return _socket_nn->async_send(
@@ -80,14 +98,16 @@ boost::asio::awaitable<size_t> w_tcp_client::async_write(
 }
 
 boost::asio::awaitable<size_t> w_tcp_client::async_read(
-    _Inout_ w_buffer &p_mut_buffer) {
+    _Inout_ w_buffer &p_mut_buffer)
+{
   const gsl::not_null<tcp::socket *> _socket_nn(this->_socket.get());
 
   return _socket_nn->async_receive(boost::asio::buffer(p_mut_buffer.buf),
                                    boost::asio::use_awaitable);
 }
 
-bool w_tcp_client::get_is_open() const {
+bool w_tcp_client::get_is_open() const
+{
   const gsl::not_null<tcp::socket *> _socket_nn(this->_socket.get());
   return _socket_nn->is_open();
 }
