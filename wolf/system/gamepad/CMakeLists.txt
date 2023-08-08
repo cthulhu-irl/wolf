@@ -78,12 +78,12 @@ if (WOLF_SYSTEM_GAMEPAD_VIRTUAL)
     FetchContent_MakeAvailable(ViGEmClient)
 
     set(WOLF_SYSTEM_GAMEPAD_VIRTUAL_HEADERS
-        gamepad/w_gamepad_virtual_pool.hpp
-        gamepad/w_gamepad_virtual.hpp
+        w_gamepad_virtual_pool.hpp
+        w_gamepad_virtual.hpp
     )
     set(WOLF_SYSTEM_GAMEPAD_VIRTUAL_SOURCES
-      gamepad/w_gamepad_virtual_pool.cpp
-      gamepad/w_gamepad_virtual.cpp
+        w_gamepad_virtual_pool.cpp
+        w_gamepad_virtual.cpp
     )
     target_sources(${PROJECT_NAME}
         PRIVATE

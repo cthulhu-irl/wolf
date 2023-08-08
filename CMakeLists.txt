@@ -51,7 +51,7 @@ wolf_feature_option(WOLF_STREAM_WEBRTC "Enable webRTC" OFF)
 
 # system modules
 wolf_feature_option(WOLF_SYSTEM_GAMEPAD_CLIENT "Enable gamepad input handling" WOLF_FEATURES_ALL AND WIN64 AND NOT EMSCRIPTEN)
-wolf_feature_option(WOLF_SYSTEM_GAMEPAD_VIRTUAL "Enable virtual gamepad simulator" OFF) #WOLF_FEATURES_ALL AND WIN64 AND NOT EMSCRIPTEN
+wolf_feature_option(WOLF_SYSTEM_GAMEPAD_VIRTUAL "Enable virtual gamepad simulator" WOLF_FEATURES_ALL AND WIN64 AND NOT EMSCRIPTEN)
 wolf_feature_option(WOLF_SYSTEM_HTTP_WS "Enable http1.1 and websocket client/server based on boost beast or Emscripten" WOLF_FEATURES_ALL)
 wolf_feature_option(WOLF_SYSTEM_LOG "Enable log" WOLF_FEATURES_ALL AND NOT EMSCRIPTEN)
 wolf_feature_option(WOLF_SYSTEM_LZ4 "Enable lz4 for compression" WOLF_FEATURES_ALL AND NOT EMSCRIPTEN)
