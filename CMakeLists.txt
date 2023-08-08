@@ -74,15 +74,17 @@ wolf_feature_option(WOLF_ML_OCR "Enable machine learning referee ocr" OFF)
 # complex/pre-built wolf dependencies to be made available.
 include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
-set(WDEPS_MSQUIC ${WOLF_STREAM_QUIC})
-set(WDEPS_FFMPEG5 ${WOLF_MEDIA_FFMPEG})
-FetchContent_Declare(
-    wolf-deps
-    GIT_REPOSITORY https://github.com/WolfEngine/wolf-deps
-    GIT_TAG        main
-    GIT_SHALLOW    TRUE
-)
-FetchContent_MakeAvailable(wolf-deps)
+if (WOLF_STREAM_QUIC OR WOLF_MEDIA_FFMPEG)
+    set(WDEPS_MSQUIC ${WOLF_STREAM_QUIC})
+    set(WDEPS_FFMPEG5 ${WOLF_MEDIA_FFMPEG})
+    FetchContent_Declare(
+        wolf-deps
+        GIT_REPOSITORY https://github.com/WolfEngine/wolf-deps
+        GIT_TAG        main
+        GIT_SHALLOW    TRUE
+    )
+    FetchContent_MakeAvailable(wolf-deps)
+endif()
 
 add_subdirectory(wolf)
 
