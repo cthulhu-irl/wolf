@@ -13,8 +13,6 @@
 #include "wolf/media/openal/w_openal.hpp"
 #include "wolf/system/w_leak_detector.hpp"
 
-#include "tests/common.hpp"
-
 BOOST_AUTO_TEST_CASE(openal_play_wav)
 {
   using wolf::media::w_openal;

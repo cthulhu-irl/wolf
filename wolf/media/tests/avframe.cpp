@@ -10,8 +10,6 @@
 #include <media/ffmpeg/w_av_packet.hpp>
 #include <system/w_leak_detector.hpp>
 
-#include "tests/common.hpp"
-
 BOOST_AUTO_TEST_CASE(avframe_test)
 {
   const wolf::system::w_leak_detector _detector = {};

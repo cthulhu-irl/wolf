@@ -11,8 +11,6 @@
 #include <system/w_leak_detector.hpp>
 #include <wolf.hpp>
 
-#include "tests/common.hpp"
-
 BOOST_AUTO_TEST_CASE(ffmpeg_stream_test)
 {
   const wolf::system::w_leak_detector _detector = {};

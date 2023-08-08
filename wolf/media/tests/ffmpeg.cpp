@@ -10,8 +10,6 @@
 #include <media/ffmpeg/w_ffmpeg.hpp>
 #include <system/w_leak_detector.hpp>
 
-#include "tests/common.hpp"
-
 using w_av_frame = wolf::media::ffmpeg::w_av_frame;
 using w_av_codec_opt = wolf::media::ffmpeg::w_av_codec_opt;
 using w_av_config = wolf::media::ffmpeg::w_av_config;
