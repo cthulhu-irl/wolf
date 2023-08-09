@@ -12,22 +12,22 @@ class CustomRenderItem : public QQuickPaintedItem
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(unsigned int fps READ getFps NOTIFY fpsChanged CONSTANT)
-    Q_PROPERTY(double total_time READ getTotalTime NOTIFY totalTimeChanged)
+    Q_PROPERTY(uint32_t fps READ get_fps NOTIFY fps_changed CONSTANT)
+    Q_PROPERTY(double total_time READ get_total_time NOTIFY total_time_changed)
 
 public:
-    explicit CustomRenderItem(QQuickPaintedItem* p_parent = nullptr);
-    void paint(QPainter* p_painter) override;
+    explicit CustomRenderItem(QQuickPaintedItem *p_parent = nullptr);
+    void paint(QPainter *p_painter) override;
 
-    Q_INVOKABLE unsigned int getFps() const;
-    Q_INVOKABLE unsigned int getTotalTime() const;
+    Q_INVOKABLE uint32_t get_fps() const;
+    Q_INVOKABLE uint32_t get_total_time() const;
 
 signals:
-    void fpsChanged(unsigned int fps);
-    void totalTimeChanged(double total_time);
+    void fps_changed(unsigned int fps);
+    void total_time_changed(double total_time);
 
 private:
-    wolf::system::w_gametime gametime_;
-    QTimer timer_;
-    QImage image_;
+    wolf::system::w_gametime _gametime;
+    QTimer _timer;
+    QImage _image;
 };
