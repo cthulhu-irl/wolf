@@ -8,7 +8,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}> # TODO remove this later
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
@@ -48,7 +48,7 @@ vcpkg_install(ms-gsl)
 find_package(Microsoft.GSL CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC Microsoft.GSL::GSL)
 
-vcpkg_install(boost-leaf boost-signals2)
+vcpkg_install(boost-leaf boost-signals2 boost-asio)
 find_package(Boost ${BOOST_VERSION} REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC Boost::boost)
 
