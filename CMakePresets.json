@@ -12,7 +12,8 @@
             "binaryDir": "${sourceDir}/build/${presetName}",
             "installDir": "${sourceDir}/install/${presetName}",
             "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "Qt6_DIR": "$env{Qt6_DIR}"
             }
         },
         {
@@ -65,8 +66,7 @@
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
                 "BUILD_SHARED_LIBS": "OFF",
-                "VCPKG_TARGET_TRIPLET": "arm64-osx",
-                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{Qt6_DIR}/qt.toolchain.cmake"
+                "VCPKG_TARGET_TRIPLET": "arm64-osx"
             }
         },
         {
