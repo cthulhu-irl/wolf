@@ -45,7 +45,7 @@ wolf_feature_option(WOLF_MEDIA_STB "Enable stb headers" WOLF_FEATURES_ALL)
 wolf_feature_option(WOLF_MEDIA_GSTREAMER "Enable gstreamer wrapper" OFF)
 
 # stream modules
-wolf_feature_option(WOLF_STREAM_GRPC "Enable gRPC connection" WOLF_FEATURES_ALL AND NOT EMSCRIPTEN)
+wolf_feature_option(WOLF_STREAM_GRPC "Enable gRPC connection" OFF) #WOLF_FEATURES_ALL AND NOT EMSCRIPTEN)
 wolf_feature_option(WOLF_STREAM_QUIC "Enable QUIC protocol" OFF)
 wolf_feature_option(WOLF_STREAM_RIST "Enable RIST streaming protocol" OFF)
 wolf_feature_option(WOLF_STREAM_WEBRTC "Enable webRTC" OFF)
