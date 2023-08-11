@@ -32,13 +32,13 @@ jobs:
           key: vcpkg-windows
           path: vcpkg
 
-      - name: Set up vcpkg
+      - name: Setup vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg.git || git -C vcpkg pull --ff
           .\vcpkg\bootstrap-vcpkg.bat
           .\vcpkg\vcpkg integrate install
 
-      - name: Setup OpenCppCoverage and add to PATH
+      - name: Setup OpenCppCoverage
         id: setup_opencppcoverage
         run: |
           choco install OpenCppCoverage -y

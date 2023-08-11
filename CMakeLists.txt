@@ -38,7 +38,7 @@ option(WOLF_EXAMPLES "Build examples" ON)
 option(WOLF_FEATURES_ALL "Enable all features by default" ${WOLF_MAIN_PROJECT})
 
 # media modules
-wolf_feature_option(WOLF_MEDIA_FFMPEG "Enable ffmpeg encoding and decoding" WOLF_FEATURES_ALL AND (WIN64 OR ANDROID) AND NOT EMSCRIPTEN)
+wolf_feature_option(WOLF_MEDIA_FFMPEG "Enable ffmpeg encoding and decoding" OFF) # WOLF_FEATURES_ALL AND (WIN64 OR ANDROID) AND NOT EMSCRIPTEN)
 wolf_feature_option(WOLF_MEDIA_OPENAL "Enable OpenAL soft" WOLF_FEATURES_ALL AND NOT LINUX AND NOT EMSCRIPTEN)
 wolf_feature_option(WOLF_MEDIA_SCREEN_CAPTURE "Enable screen capture" OFF)
 wolf_feature_option(WOLF_MEDIA_STB "Enable stb headers" WOLF_FEATURES_ALL)
@@ -93,6 +93,6 @@ if (WOLF_TEST AND NOT EMSCRIPTEN)
     include(cmake/test.cmake)
 endif()
 
-if (WOLF_EXAMPLES AND NOT EMSCRIPTEN)
+if (WOLF_EXAMPLES AND NOT MOBILE AND NOT EMSCRIPTEN)
     add_subdirectory(examples)
 endif()

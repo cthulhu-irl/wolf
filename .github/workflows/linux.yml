@@ -47,11 +47,29 @@ jobs:
         key: vcpkg-linux
         path: vcpkg
 
-    - name: Set up vcpkg
+    - name: Setup vcpkg
       run: |
         git clone https://github.com/microsoft/vcpkg.git || git -C vcpkg pull --ff
         ./vcpkg/bootstrap-vcpkg.sh
         ./vcpkg/vcpkg integrate install
+
+      - name: Setup Qt6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.5.2'
+          host: 'linux'
+          target: 'desktop'
+          arch: 'gcc_64'
+          dir: '${{ github.workspace }}/qt6/'
+          install-deps: 'true'
+          cache: 'false'
+          cache-key-prefix: 'install-qt-action'
+          setup-python: 'true'
+          set-env: 'true'
+          tools-only: 'false'
+          aqtversion: '==3.1.*'
+          py7zrversion: '==0.20.*'
+          extra: '--external 7z'
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
