@@ -37,7 +37,7 @@ jobs:
           ./vcpkg/vcpkg integrate install
 
       - name: Configure CMake in Debug mode
-        run: cmake -S . -B ${{ env.build }} --preset=osx-arm64-clang -DWOLF_FEATURES_ALL=ON
+        run: cmake -S . -B ${{ env.build }} --preset=osx-arm64-clang-shared -DWOLF_FEATURES_ALL=ON
  
       - name: Build CMake in Debug mode
         run: cmake --build ${{ env.build }} --config Debug
