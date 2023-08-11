@@ -7,6 +7,7 @@ project(wolf_example_gametime
 
 set(CMAKE_AUTOMOC ON)
 
+vcpkg_install(qtbase qtdeclarative)
 find_package(Qt6 COMPONENTS Quick REQUIRED)
 
 qt_add_executable(${PROJECT_NAME}
