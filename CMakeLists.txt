@@ -34,7 +34,7 @@ endif()
 set(BOOST_VERSION "1.82.0" CACHE STRING "Boost version tag")
 option(BUILD_SHARED_LIBS "Whether to build shared or static library" ANDROID)
 option(WOLF_TEST "Enable tests" ${WOLF_MAIN_PROJECT})
-option(WOLF_EXAMPLES "Build examples" OFF)
+option(WOLF_EXAMPLES "Build examples" ON)
 option(WOLF_FEATURES_ALL "Enable all features by default" ${WOLF_MAIN_PROJECT})
 
 # media modules

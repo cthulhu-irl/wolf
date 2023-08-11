@@ -8,7 +8,7 @@ Window {
     visible: true
     title: qsTr("Hello World")
 
-    CustomRenderItem {
+    q_custom_render_item {
         id: render_item
         anchors.fill: parent
     }

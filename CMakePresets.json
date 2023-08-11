@@ -12,12 +12,11 @@
             "binaryDir": "${sourceDir}/build/${presetName}",
             "installDir": "${sourceDir}/install/${presetName}",
             "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-                "Qt6_DIR": "$env{Qt6_DIR}"
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             }
         },
         {
-            "name": "windows-x64-msvc-static",
+            "name": "windows-x64-msvc-shared",
             "inherits": "base",
             "hidden": false,
             "generator": "Visual Studio 17 2022",
@@ -28,8 +27,9 @@
             "cacheVariables": {
                 "ARCH": "win64",
                 "CMAKE_CONFIGURATION_TYPES": "Debug;Release;RelWithDebInfo;MinSizeRel",
-                "BUILD_SHARED_LIBS": "OFF",
-                "VCPKG_TARGET_TRIPLET": "x64-windows-static"
+                "BUILD_SHARED_LIBS": "ON",
+                "VCPKG_TARGET_TRIPLET": "x64-windows",
+                "Qt6_DIR": "$env{Qt6_DIR}/msvc2019_64/lib/cmake/Qt6"
             },
             "condition": {
                 "type": "equals",
@@ -54,7 +54,7 @@
             }
         },
         {
-            "name": "osx-arm64-clang",
+            "name": "osx-arm64-clang-shared",
             "inherits": "base",
             "generator": "Ninja",
             "architecture": {
@@ -65,7 +65,7 @@
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
-                "BUILD_SHARED_LIBS": "OFF",
+                "BUILD_SHARED_LIBS": "ON",
                 "VCPKG_TARGET_TRIPLET": "arm64-osx"
             }
         },
@@ -115,10 +115,10 @@
     ],
     "buildPresets": [
         {
-            "configurePreset": "windows-x64-msvc-static",
-            "description": "Build wolf for Windows x64 arch as a static library",
-            "displayName": "windows-x64-msvc-static",
-            "name": "windows-x64-msvc-static"
+            "configurePreset": "windows-x64-msvc-shared",
+            "description": "Build wolf for Windows x64 arch as a shared library",
+            "displayName": "windows-x64-msvc-shared",
+            "name": "windows-x64-msvc-shared"
         },
         {
             "configurePreset": "linux-x64-gnu-shared",
@@ -133,10 +133,10 @@
             "name": "android-arm-clang-shared"
         },
         {
-            "configurePreset": "osx-arm64-clang",
-            "description": "Build wolf for macOS arm64 arch as a static library",
-            "displayName": "osx-arm64-clang",
-            "name": "osx-arm64-clang"
+            "configurePreset": "osx-arm64-clang-shared",
+            "description": "Build wolf for macOS arm64 arch as a shared library",
+            "displayName": "osx-arm64-clang-shared",
+            "name": "osx-arm64-clang-shared"
         },
         {
             "configurePreset": "wasm32-unknown-emscripten",
@@ -155,9 +155,9 @@
             "configuration": "Debug"
         },
         {
-            "name": "windows-x64-msvc-static",
+            "name": "windows-x64-msvc-shared",
             "inherits": "base",
-            "configurePreset": "windows-x64-msvc-static"
+            "configurePreset": "windows-x64-msvc-shared"
         },
         {
             "name": "linux-x64-gnu-shared",

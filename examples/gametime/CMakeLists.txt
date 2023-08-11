@@ -19,8 +19,8 @@ qt_add_qml_module(${PROJECT_NAME}
     QML_FILES
         main.qml
     SOURCES
-        CustomRenderItem.hpp
-        CustomRenderItem.cpp
+    q_custom_render_item.hpp
+    q_custom_render_item.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -37,4 +37,9 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE
         Qt6::Quick
         wolf::wolf
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
+    COMMAND Qt6::windeployqt
+    ARGS $<TARGET_FILE:${PROJECT_NAME}>
 )
