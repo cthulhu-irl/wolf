@@ -50,7 +50,8 @@
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
                 "BUILD_SHARED_LIBS": "ON",
-                "VCPKG_TARGET_TRIPLET": "x64-linux"
+                "VCPKG_TARGET_TRIPLET": "x64-linux",
+                "Qt6_DIR": "$env{Qt6_DIR}/gcc_64/lib/cmake/Qt6"
             }
         },
         {
@@ -66,7 +67,8 @@
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
                 "BUILD_SHARED_LIBS": "ON",
-                "VCPKG_TARGET_TRIPLET": "arm64-osx"
+                "VCPKG_TARGET_TRIPLET": "arm64-osx",
+                "Qt6_DIR": "$env{Qt6_DIR}/clang_64/lib/cmake/Qt6"
             }
         },
         {
