@@ -44,6 +44,24 @@ jobs:
           choco install OpenCppCoverage -y
           echo "C:\Program Files\OpenCppCoverage" >> $env:GITHUB_PATH
 
+      - name: Setup Qt6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.5.2'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
+          dir: '${{ github.workspace }}/qt6/'
+          install-deps: 'true'
+          cache: 'false'
+          cache-key-prefix: 'install-qt-action'
+          setup-python: 'true'
+          set-env: 'true'
+          tools-only: 'false'
+          aqtversion: '==3.1.*'
+          py7zrversion: '==0.20.*'
+          extra: '--external 7z'
+
       - name: Configure CMake in Debug mode
         run: cmake -S . -B ${{ env.build }} --preset=windows-x64-msvc-shared -DWOLF_FEATURES_ALL=ON
  
