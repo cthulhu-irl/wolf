@@ -40,7 +40,7 @@ jobs:
         key: vcpkg-${{matrix.config.preset}}
         path: vcpkg
 
-    - name: Set up vcpkg
+    - name: Setup vcpkg
       run: |
         git clone https://github.com/microsoft/vcpkg.git || git -C vcpkg pull -ff
         ./vcpkg/bootstrap-vcpkg.sh

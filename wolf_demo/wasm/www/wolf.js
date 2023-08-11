@@ -62,9 +62,9 @@ function locateFile(path) {
 
 // Hooks that are implemented differently in different runtime environments.
 var read_,
-    readAsync,
-    readBinary,
-    setWindowTitle;
+  readAsync,
+  readBinary,
+  setWindowTitle;
 
 // Normally we don't log exceptions but instead let them bubble out the top
 // level where the embedding environment (e.g. the browser) can handle
@@ -99,35 +99,35 @@ if (ENVIRONMENT_IS_NODE) {
     scriptDirectory = __dirname + '/';
   }
 
-// include: node_shell_read.js
+  // include: node_shell_read.js
 
 
-read_ = (filename, binary) => {
-  // We need to re-wrap `file://` strings to URLs. Normalizing isn't
-  // necessary in that case, the path should already be absolute.
-  filename = isFileURI(filename) ? new URL(filename) : nodePath.normalize(filename);
-  return fs.readFileSync(filename, binary ? undefined : 'utf8');
-};
+  read_ = (filename, binary) => {
+    // We need to re-wrap `file://` strings to URLs. Normalizing isn't
+    // necessary in that case, the path should already be absolute.
+    filename = isFileURI(filename) ? new URL(filename) : nodePath.normalize(filename);
+    return fs.readFileSync(filename, binary ? undefined : 'utf8');
+  };
 
-readBinary = (filename) => {
-  var ret = read_(filename, true);
-  if (!ret.buffer) {
-    ret = new Uint8Array(ret);
-  }
-  assert(ret.buffer);
-  return ret;
-};
+  readBinary = (filename) => {
+    var ret = read_(filename, true);
+    if (!ret.buffer) {
+      ret = new Uint8Array(ret);
+    }
+    assert(ret.buffer);
+    return ret;
+  };
 
-readAsync = (filename, onload, onerror) => {
-  // See the comment in the `read_` function.
-  filename = isFileURI(filename) ? new URL(filename) : nodePath.normalize(filename);
-  fs.readFile(filename, function(err, data) {
-    if (err) onerror(err);
-    else onload(data.buffer);
-  });
-};
+  readAsync = (filename, onload, onerror) => {
+    // See the comment in the `read_` function.
+    filename = isFileURI(filename) ? new URL(filename) : nodePath.normalize(filename);
+    fs.readFile(filename, function (err, data) {
+      if (err) onerror(err);
+      else onload(data.buffer);
+    });
+  };
 
-// end include: node_shell_read.js
+  // end include: node_shell_read.js
   if (process['argv'].length > 1) {
     thisProgram = process['argv'][1].replace(/\\/g, '/');
   }
@@ -138,7 +138,7 @@ readAsync = (filename, onload, onerror) => {
     module['exports'] = Module;
   }
 
-  process['on']('uncaughtException', function(ex) {
+  process['on']('uncaughtException', function (ex) {
     // suppress ExitStatus exceptions from showing an error
     if (!(ex instanceof ExitStatus)) {
       throw ex;
@@ -150,7 +150,7 @@ readAsync = (filename, onload, onerror) => {
   // not be needed with node v15 and about because it is now the default
   // behaviour:
   // See https://nodejs.org/api/cli.html#cli_unhandled_rejections_mode
-  process['on']('unhandledRejection', function(reason) { throw reason; });
+  process['on']('unhandledRejection', function (reason) { throw reason; });
 
   quit_ = (status, toThrow) => {
     if (keepRuntimeAlive()) {
@@ -164,121 +164,120 @@ readAsync = (filename, onload, onerror) => {
   Module['inspect'] = function () { return '[Emscripten Module object]'; };
 
 } else
-if (ENVIRONMENT_IS_SHELL) {
+  if (ENVIRONMENT_IS_SHELL) {
 
-  if ((typeof process == 'object' && typeof require === 'function') || typeof window == 'object' || typeof importScripts == 'function') throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
+    if ((typeof process == 'object' && typeof require === 'function') || typeof window == 'object' || typeof importScripts == 'function') throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
 
-  if (typeof read != 'undefined') {
-    read_ = function shell_read(f) {
-      return read(f);
-    };
-  }
-
-  readBinary = function readBinary(f) {
-    let data;
-    if (typeof readbuffer == 'function') {
-      return new Uint8Array(readbuffer(f));
+    if (typeof read != 'undefined') {
+      read_ = function shell_read(f) {
+        return read(f);
+      };
     }
-    data = read(f, 'binary');
-    assert(typeof data == 'object');
-    return data;
-  };
 
-  readAsync = function readAsync(f, onload, onerror) {
-    setTimeout(() => onload(readBinary(f)), 0);
-  };
-
-  if (typeof scriptArgs != 'undefined') {
-    arguments_ = scriptArgs;
-  } else if (typeof arguments != 'undefined') {
-    arguments_ = arguments;
-  }
-
-  if (typeof quit == 'function') {
-    quit_ = (status, toThrow) => {
-      logExceptionOnExit(toThrow);
-      quit(status);
-    };
-  }
-
-  if (typeof print != 'undefined') {
-    // Prefer to use print/printErr where they exist, as they usually work better.
-    if (typeof console == 'undefined') console = /** @type{!Console} */({});
-    console.log = /** @type{!function(this:Console, ...*): undefined} */ (print);
-    console.warn = console.error = /** @type{!function(this:Console, ...*): undefined} */ (typeof printErr != 'undefined' ? printErr : print);
-  }
-
-} else
-
-// Note that this includes Node.js workers when relevant (pthreads is enabled).
-// Node.js workers are detected as a combination of ENVIRONMENT_IS_WORKER and
-// ENVIRONMENT_IS_NODE.
-if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
-  if (ENVIRONMENT_IS_WORKER) { // Check worker, not web, since window could be polyfilled
-    scriptDirectory = self.location.href;
-  } else if (typeof document != 'undefined' && document.currentScript) { // web
-    scriptDirectory = document.currentScript.src;
-  }
-  // blob urls look like blob:http://site.com/etc/etc and we cannot infer anything from them.
-  // otherwise, slice off the final part of the url to find the script directory.
-  // if scriptDirectory does not contain a slash, lastIndexOf will return -1,
-  // and scriptDirectory will correctly be replaced with an empty string.
-  // If scriptDirectory contains a query (starting with ?) or a fragment (starting with #),
-  // they are removed because they could contain a slash.
-  if (scriptDirectory.indexOf('blob:') !== 0) {
-    scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf('/')+1);
-  } else {
-    scriptDirectory = '';
-  }
-
-  if (!(typeof window == 'object' || typeof importScripts == 'function')) throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
-
-  // Differentiate the Web Worker from the Node Worker case, as reading must
-  // be done differently.
-  {
-// include: web_or_worker_shell_read.js
-
-
-  read_ = (url) => {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', url, false);
-      xhr.send(null);
-      return xhr.responseText;
-  }
-
-  if (ENVIRONMENT_IS_WORKER) {
-    readBinary = (url) => {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', url, false);
-        xhr.responseType = 'arraybuffer';
-        xhr.send(null);
-        return new Uint8Array(/** @type{!ArrayBuffer} */(xhr.response));
-    };
-  }
-
-  readAsync = (url, onload, onerror) => {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.responseType = 'arraybuffer';
-    xhr.onload = () => {
-      if (xhr.status == 200 || (xhr.status == 0 && xhr.response)) { // file URLs can return 0
-        onload(xhr.response);
-        return;
+    readBinary = function readBinary(f) {
+      let data;
+      if (typeof readbuffer == 'function') {
+        return new Uint8Array(readbuffer(f));
       }
-      onerror();
+      data = read(f, 'binary');
+      assert(typeof data == 'object');
+      return data;
     };
-    xhr.onerror = onerror;
-    xhr.send(null);
-  }
 
-// end include: web_or_worker_shell_read.js
-  }
+    readAsync = function readAsync(f, onload, onerror) {
+      setTimeout(() => onload(readBinary(f)), 0);
+    };
 
-  setWindowTitle = (title) => document.title = title;
-} else
-{
-  throw new Error('environment detection error');
-}
+    if (typeof scriptArgs != 'undefined') {
+      arguments_ = scriptArgs;
+    } else if (typeof arguments != 'undefined') {
+      arguments_ = arguments;
+    }
+
+    if (typeof quit == 'function') {
+      quit_ = (status, toThrow) => {
+        logExceptionOnExit(toThrow);
+        quit(status);
+      };
+    }
+
+    if (typeof print != 'undefined') {
+      // Prefer to use print/printErr where they exist, as they usually work better.
+      if (typeof console == 'undefined') console = /** @type{!Console} */({});
+      console.log = /** @type{!function(this:Console, ...*): undefined} */ (print);
+      console.warn = console.error = /** @type{!function(this:Console, ...*): undefined} */ (typeof printErr != 'undefined' ? printErr : print);
+    }
+
+  } else
+
+    // Note that this includes Node.js workers when relevant (pthreads is enabled).
+    // Node.js workers are detected as a combination of ENVIRONMENT_IS_WORKER and
+    // ENVIRONMENT_IS_NODE.
+    if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
+      if (ENVIRONMENT_IS_WORKER) { // Check worker, not web, since window could be polyfilled
+        scriptDirectory = self.location.href;
+      } else if (typeof document != 'undefined' && document.currentScript) { // web
+        scriptDirectory = document.currentScript.src;
+      }
+      // blob urls look like blob:http://site.com/etc/etc and we cannot infer anything from them.
+      // otherwise, slice off the final part of the url to find the script directory.
+      // if scriptDirectory does not contain a slash, lastIndexOf will return -1,
+      // and scriptDirectory will correctly be replaced with an empty string.
+      // If scriptDirectory contains a query (starting with ?) or a fragment (starting with #),
+      // they are removed because they could contain a slash.
+      if (scriptDirectory.indexOf('blob:') !== 0) {
+        scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf('/') + 1);
+      } else {
+        scriptDirectory = '';
+      }
+
+      if (!(typeof window == 'object' || typeof importScripts == 'function')) throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
+
+      // Differentiate the Web Worker from the Node Worker case, as reading must
+      // be done differently.
+      {
+        // include: web_or_worker_shell_read.js
+
+
+        read_ = (url) => {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', url, false);
+          xhr.send(null);
+          return xhr.responseText;
+        }
+
+        if (ENVIRONMENT_IS_WORKER) {
+          readBinary = (url) => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, false);
+            xhr.responseType = 'arraybuffer';
+            xhr.send(null);
+            return new Uint8Array(/** @type{!ArrayBuffer} */(xhr.response));
+          };
+        }
+
+        readAsync = (url, onload, onerror) => {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', url, true);
+          xhr.responseType = 'arraybuffer';
+          xhr.onload = () => {
+            if (xhr.status == 200 || (xhr.status == 0 && xhr.response)) { // file URLs can return 0
+              onload(xhr.response);
+              return;
+            }
+            onerror();
+          };
+          xhr.onerror = onerror;
+          xhr.send(null);
+        }
+
+        // end include: web_or_worker_shell_read.js
+      }
+
+      setWindowTitle = (title) => document.title = title;
+    } else {
+      throw new Error('environment detection error');
+    }
 
 var out = Module['print'] || console.log.bind(console);
 var err = Module['printErr'] || console.warn.bind(console);
@@ -295,13 +294,13 @@ checkIncomingModuleAPI();
 // expected to arrive, and second, by using a local everywhere else that can be
 // minified.
 
-if (Module['arguments']) arguments_ = Module['arguments'];legacyModuleProp('arguments', 'arguments_');
+if (Module['arguments']) arguments_ = Module['arguments']; legacyModuleProp('arguments', 'arguments_');
 
-if (Module['thisProgram']) thisProgram = Module['thisProgram'];legacyModuleProp('thisProgram', 'thisProgram');
+if (Module['thisProgram']) thisProgram = Module['thisProgram']; legacyModuleProp('thisProgram', 'thisProgram');
 
-if (Module['quit']) quit_ = Module['quit'];legacyModuleProp('quit', 'quit_');
+if (Module['quit']) quit_ = Module['quit']; legacyModuleProp('quit', 'quit_');
 
-// perform assertions in shell.js after we set up out() and err(), as otherwise if an assertion fails it cannot print the message
+// perform assertions in shell.js after we setup out() and err(), as otherwise if an assertion fails it cannot print the message
 // Assertions on removed incoming Module JS APIs.
 assert(typeof Module['memoryInitializerPrefixURL'] == 'undefined', 'Module.memoryInitializerPrefixURL option was removed, use Module.locateFile instead');
 assert(typeof Module['pthreadMainPrefixURL'] == 'undefined', 'Module.pthreadMainPrefixURL option was removed, use Module.locateFile instead');
@@ -358,7 +357,7 @@ function legacyModuleProp(prop, newName) {
   if (!Object.getOwnPropertyDescriptor(Module, prop)) {
     Object.defineProperty(Module, prop, {
       configurable: true,
-      get: function() {
+      get: function () {
         abort('Module.' + prop + ' has been replaced with plain ' + newName + ' (the initial value can be provided on Module, but after startup the value is only looked for on a local variable of that name)');
       }
     });
@@ -374,20 +373,20 @@ function ignoredModuleProp(prop) {
 // forcing the filesystem exports a few things by default
 function isExportedByForceFilesystem(name) {
   return name === 'FS_createPath' ||
-         name === 'FS_createDataFile' ||
-         name === 'FS_createPreloadedFile' ||
-         name === 'FS_unlink' ||
-         name === 'addRunDependency' ||
-         // The old FS has some functionality that WasmFS lacks.
-         name === 'FS_createLazyFile' ||
-         name === 'FS_createDevice' ||
-         name === 'removeRunDependency';
+    name === 'FS_createDataFile' ||
+    name === 'FS_createPreloadedFile' ||
+    name === 'FS_unlink' ||
+    name === 'addRunDependency' ||
+    // The old FS has some functionality that WasmFS lacks.
+    name === 'FS_createLazyFile' ||
+    name === 'FS_createDevice' ||
+    name === 'removeRunDependency';
 }
 
 function missingGlobal(sym, msg) {
   Object.defineProperty(globalThis, sym, {
     configurable: true,
-    get: function() {
+    get: function () {
       warnOnce('`' + sym + '` is not longer defined by emscripten. ' + msg);
       return undefined;
     }
@@ -400,7 +399,7 @@ function missingLibrarySymbol(sym) {
   if (typeof globalThis !== 'undefined' && !Object.getOwnPropertyDescriptor(globalThis, sym)) {
     Object.defineProperty(globalThis, sym, {
       configurable: true,
-      get: function() {
+      get: function () {
         // Can't `abort()` here because it would break code that does runtime
         // checks.  e.g. `if (typeof SDL === 'undefined')`.
         var msg = '`' + sym + '` is a library symbol and not included by default; add it to your library.js __deps or to DEFAULT_LIBRARY_FUNCS_TO_INCLUDE on the command line';
@@ -426,7 +425,7 @@ function unexportedRuntimeSymbol(sym) {
   if (!Object.getOwnPropertyDescriptor(Module, sym)) {
     Object.defineProperty(Module, sym, {
       configurable: true,
-      get: function() {
+      get: function () {
         var msg = "'" + sym + "' was not exported. add it to EXPORTED_RUNTIME_METHODS (see the FAQ)";
         if (isExportedByForceFilesystem(sym)) {
           msg += '. Alternatively, forcing filesystem support (-sFORCE_FILESYSTEM) can export this for you';
@@ -453,8 +452,8 @@ function unexportedRuntimeSymbol(sym) {
 //    is up at http://kripken.github.io/emscripten-site/docs/api_reference/preamble.js.html
 
 var wasmBinary;
-if (Module['wasmBinary']) wasmBinary = Module['wasmBinary'];legacyModuleProp('wasmBinary', 'wasmBinary');
-var noExitRuntime = Module['noExitRuntime'] || true;legacyModuleProp('noExitRuntime', 'noExitRuntime');
+if (Module['wasmBinary']) wasmBinary = Module['wasmBinary']; legacyModuleProp('wasmBinary', 'wasmBinary');
+var noExitRuntime = Module['noExitRuntime'] || true; legacyModuleProp('noExitRuntime', 'noExitRuntime');
 
 if (typeof WebAssembly != 'object') {
   abort('no native wasm support detected');
@@ -646,7 +645,7 @@ function stringToUTF8Array(str, heap, outIdx, maxBytesToWrite) {
  */
 function stringToUTF8(str, outPtr, maxBytesToWrite) {
   assert(typeof maxBytesToWrite == 'number', 'stringToUTF8(str, outPtr, maxBytesToWrite) is missing the third parameter that specifies the length of the output buffer!');
-  return stringToUTF8Array(str, HEAPU8,outPtr, maxBytesToWrite);
+  return stringToUTF8Array(str, HEAPU8, outPtr, maxBytesToWrite);
 }
 
 /**
@@ -681,21 +680,21 @@ function lengthBytesUTF8(str) {
 // Memory management
 
 var HEAP,
-/** @type {!Int8Array} */
+  /** @type {!Int8Array} */
   HEAP8,
-/** @type {!Uint8Array} */
+  /** @type {!Uint8Array} */
   HEAPU8,
-/** @type {!Int16Array} */
+  /** @type {!Int16Array} */
   HEAP16,
-/** @type {!Uint16Array} */
+  /** @type {!Uint16Array} */
   HEAPU16,
-/** @type {!Int32Array} */
+  /** @type {!Int32Array} */
   HEAP32,
-/** @type {!Uint32Array} */
+  /** @type {!Uint32Array} */
   HEAPU32,
-/** @type {!Float32Array} */
+  /** @type {!Float32Array} */
   HEAPF32,
-/** @type {!Float64Array} */
+  /** @type {!Float64Array} */
   HEAPF64;
 
 function updateMemoryViews() {
@@ -713,13 +712,13 @@ function updateMemoryViews() {
 var STACK_SIZE = 65536;
 if (Module['STACK_SIZE']) assert(STACK_SIZE === Module['STACK_SIZE'], 'the stack size can no longer be determined at runtime')
 
-var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 16777216;legacyModuleProp('INITIAL_MEMORY', 'INITIAL_MEMORY');
+var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 16777216; legacyModuleProp('INITIAL_MEMORY', 'INITIAL_MEMORY');
 
 assert(INITIAL_MEMORY >= STACK_SIZE, 'INITIAL_MEMORY should be larger than STACK_SIZE, was ' + INITIAL_MEMORY + '! (STACK_SIZE=' + STACK_SIZE + ')');
 
 // check for full engine support (use string 'subarray' to avoid closure compiler confusion)
 assert(typeof Int32Array != 'undefined' && typeof Float64Array !== 'undefined' && Int32Array.prototype.subarray != undefined && Int32Array.prototype.set != undefined,
-       'JS engine does not provide full typed array support');
+  'JS engine does not provide full typed array support');
 
 // If memory is defined in wasm, the user can't provide it.
 assert(!Module['wasmMemory'], 'Use of `wasmMemory` detected.  Use -sIMPORTED_MEMORY to define wasmMemory externally');
@@ -748,8 +747,8 @@ function writeStackCookie() {
   // The stack grow downwards towards _emscripten_stack_get_end.
   // We write cookies to the final two words in the stack and detect if they are
   // ever overwritten.
-  HEAPU32[((max)>>2)] = 0x2135467;
-  HEAPU32[(((max)+(4))>>2)] = 0x89BACDFE;
+  HEAPU32[((max) >> 2)] = 0x2135467;
+  HEAPU32[(((max) + (4)) >> 2)] = 0x89BACDFE;
   // Also test the global address 0 for integrity.
   HEAPU32[0] = 0x63736d65; /* 'emsc' */
 }
@@ -761,8 +760,8 @@ function checkStackCookie() {
   if (max == 0) {
     max += 4;
   }
-  var cookie1 = HEAPU32[((max)>>2)];
-  var cookie2 = HEAPU32[(((max)+(4))>>2)];
+  var cookie1 = HEAPU32[((max) >> 2)];
+  var cookie2 = HEAPU32[(((max) + (4)) >> 2)];
   if (cookie1 != 0x2135467 || cookie2 != 0x89BACDFE) {
     abort('Stack overflow! Stack cookie has been overwritten at ' + ptrToString(max) + ', expected hex dwords 0x89BACDFE and 0x2135467, but received ' + ptrToString(cookie2) + ' ' + ptrToString(cookie1));
   }
@@ -777,7 +776,7 @@ function checkStackCookie() {
 
 
 // Endianness check
-(function() {
+(function () {
   var h16 = new Int16Array(1);
   var h8 = new Int8Array(h16.buffer);
   h16[0] = 0x6373;
@@ -785,10 +784,10 @@ function checkStackCookie() {
 })();
 
 // end include: runtime_assertions.js
-var __ATPRERUN__  = []; // functions called before the runtime is initialized
-var __ATINIT__    = []; // functions called during startup
-var __ATMAIN__    = []; // functions called when main() is to be run
-var __ATEXIT__    = []; // functions called during shutdown
+var __ATPRERUN__ = []; // functions called before the runtime is initialized
+var __ATINIT__ = []; // functions called during startup
+var __ATMAIN__ = []; // functions called when main() is to be run
+var __ATEXIT__ = []; // functions called during shutdown
 var __ATPOSTRUN__ = []; // functions called after the main() is called
 
 var runtimeInitialized = false;
@@ -815,13 +814,13 @@ function initRuntime() {
 
   checkStackCookie();
 
-  
+
   callRuntimeCallbacks(__ATINIT__);
 }
 
 function preMain() {
   checkStackCookie();
-  
+
   callRuntimeCallbacks(__ATMAIN__);
 }
 
@@ -906,7 +905,7 @@ function addRunDependency(id) {
     runDependencyTracking[id] = 1;
     if (runDependencyWatcher === null && typeof setInterval != 'undefined') {
       // Check for missing dependencies every few seconds
-      runDependencyWatcher = setInterval(function() {
+      runDependencyWatcher = setInterval(function () {
         if (ABORT) {
           clearInterval(runDependencyWatcher);
           runDependencyWatcher = null;
@@ -1000,18 +999,18 @@ function abort(what) {
 // end include: memoryprofiler.js
 // show errors on likely calls to FS when it was not included
 var FS = {
-  error: function() {
+  error: function () {
     abort('Filesystem support (FS) was not included. The problem is that you are using files from JS, but files were not used from C/C++, so filesystem support was not auto-included. You can force-include filesystem support with -sFORCE_FILESYSTEM');
   },
-  init: function() { FS.error() },
-  createDataFile: function() { FS.error() },
-  createPreloadedFile: function() { FS.error() },
-  createLazyFile: function() { FS.error() },
-  open: function() { FS.error() },
-  mkdev: function() { FS.error() },
-  registerDevice: function() { FS.error() },
-  analyzePath: function() { FS.error() },
-  loadFilesFromDB: function() { FS.error() },
+  init: function () { FS.error() },
+  createDataFile: function () { FS.error() },
+  createPreloadedFile: function () { FS.error() },
+  createLazyFile: function () { FS.error() },
+  open: function () { FS.error() },
+  mkdev: function () { FS.error() },
+  registerDevice: function () { FS.error() },
+  analyzePath: function () { FS.error() },
+  loadFilesFromDB: function () { FS.error() },
 
   ErrnoError: function ErrnoError() { FS.error() },
 };
@@ -1038,7 +1037,7 @@ function isFileURI(filename) {
 // end include: URIUtils.js
 /** @param {boolean=} fixedasm */
 function createExportWrapper(name, fixedasm) {
-  return function() {
+  return function () {
     var displayName = name;
     var asm = fixedasm;
     if (!fixedasm) {
@@ -1053,10 +1052,10 @@ function createExportWrapper(name, fixedasm) {
 }
 
 var wasmBinaryFile;
-  wasmBinaryFile = 'wolf.wasm';
-  if (!isDataURI(wasmBinaryFile)) {
-    wasmBinaryFile = locateFile(wasmBinaryFile);
-  }
+wasmBinaryFile = 'wolf.wasm';
+if (!isDataURI(wasmBinaryFile)) {
+  wasmBinaryFile = locateFile(wasmBinaryFile);
+}
 
 function getBinary(file) {
   try {
@@ -1083,27 +1082,27 @@ function getBinaryPromise() {
     if (typeof fetch == 'function'
       && !isFileURI(wasmBinaryFile)
     ) {
-      return fetch(wasmBinaryFile, { credentials: 'same-origin' }).then(function(response) {
+      return fetch(wasmBinaryFile, { credentials: 'same-origin' }).then(function (response) {
         if (!response['ok']) {
           throw "failed to load wasm binary file at '" + wasmBinaryFile + "'";
         }
         return response['arrayBuffer']();
       }).catch(function () {
-          return getBinary(wasmBinaryFile);
+        return getBinary(wasmBinaryFile);
       });
     }
     else {
       if (readAsync) {
         // fetch is not available or url is file => try XHR (readAsync uses XHR internally)
-        return new Promise(function(resolve, reject) {
-          readAsync(wasmBinaryFile, function(response) { resolve(new Uint8Array(/** @type{!ArrayBuffer} */(response))) }, reject)
+        return new Promise(function (resolve, reject) {
+          readAsync(wasmBinaryFile, function (response) { resolve(new Uint8Array(/** @type{!ArrayBuffer} */(response))) }, reject)
         });
       }
     }
   }
 
   // Otherwise, getBinary should be able to get it synchronously
-  return Promise.resolve().then(function() { return getBinary(wasmBinaryFile); });
+  return Promise.resolve().then(function () { return getBinary(wasmBinaryFile); });
 }
 
 // Create the wasm instance.
@@ -1158,11 +1157,11 @@ function createWasm() {
   }
 
   function instantiateArrayBuffer(receiver) {
-    return getBinaryPromise().then(function(binary) {
+    return getBinaryPromise().then(function (binary) {
       return WebAssembly.instantiate(binary, info);
     }).then(function (instance) {
       return instance;
-    }).then(receiver, function(reason) {
+    }).then(receiver, function (reason) {
       err('failed to asynchronously prepare wasm: ' + reason);
 
       // Warn on some common problems.
@@ -1175,19 +1174,19 @@ function createWasm() {
 
   function instantiateAsync() {
     if (!wasmBinary &&
-        typeof WebAssembly.instantiateStreaming == 'function' &&
-        !isDataURI(wasmBinaryFile) &&
-        // Don't use streaming for file:// delivered objects in a webview, fetch them synchronously.
-        !isFileURI(wasmBinaryFile) &&
-        // Avoid instantiateStreaming() on Node.js environment for now, as while
-        // Node.js v18.1.0 implements it, it does not have a full fetch()
-        // implementation yet.
-        //
-        // Reference:
-        //   https://github.com/emscripten-core/emscripten/pull/16917
-        !ENVIRONMENT_IS_NODE &&
-        typeof fetch == 'function') {
-      return fetch(wasmBinaryFile, { credentials: 'same-origin' }).then(function(response) {
+      typeof WebAssembly.instantiateStreaming == 'function' &&
+      !isDataURI(wasmBinaryFile) &&
+      // Don't use streaming for file:// delivered objects in a webview, fetch them synchronously.
+      !isFileURI(wasmBinaryFile) &&
+      // Avoid instantiateStreaming() on Node.js environment for now, as while
+      // Node.js v18.1.0 implements it, it does not have a full fetch()
+      // implementation yet.
+      //
+      // Reference:
+      //   https://github.com/emscripten-core/emscripten/pull/16917
+      !ENVIRONMENT_IS_NODE &&
+      typeof fetch == 'function') {
+      return fetch(wasmBinaryFile, { credentials: 'same-origin' }).then(function (response) {
         // Suppress closure warning here since the upstream definition for
         // instantiateStreaming only allows Promise<Repsponse> rather than
         // an actual Response.
@@ -1197,7 +1196,7 @@ function createWasm() {
 
         return result.then(
           receiveInstantiationResult,
-          function(reason) {
+          function (reason) {
             // We expect the most common failure cause to be a bad MIME type for the binary,
             // in which case falling back to ArrayBuffer instantiation should work.
             err('wasm streaming compile failed: ' + reason);
@@ -1218,9 +1217,9 @@ function createWasm() {
     try {
       var exports = Module['instantiateWasm'](info, receiveInstance);
       return exports;
-    } catch(e) {
+    } catch (e) {
       err('Module.instantiateWasm callback failed with error: ' + e);
-        return false;
+      return false;
     }
   }
 
@@ -1235,1555 +1234,1557 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  86684: ($0) => { var _debug = ""; if ($0 === 1) { _debug = "all"; } Janus.init({ debug: _debug , callback: function () { if (!Janus.isWebrtcSupported()) { console.error("No WebRTC support"); return 1; } } }); capture = null; id = null; local_tracks = {}; local_videos = 0; remote_tracks = {}; remote_videos = 0; role = null; room = null; screen = null; source = null; spinner = null; var _char_set = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; opaque_id = ""; for (var i = 0; i < 11; i++) { var _random_pos = Math.floor(Math.random() * _char_set.length); opaque_id += _char_set.substring(_random_pos, _random_pos + 1); } janus = new Janus({ server: server, iceServers: ice_servers, success: function () { janus.attach( { plugin: "janus.plugin.videoroom", opaqueId: opaque_id, success: function (p_plugin_handle) { screen = p_plugin_handle; Janus.log("plugin attached! (" + screen.getPlugin() + ", id=" + screen.getId() + ")"); _on_init_callback(0); }, error: function (p_error) { Janus.error("error attaching plugin: ", p_error); _on_init_callback(1); }, consentDialog: function (p_on) { Janus.debug("consent dialog should be " + (p_on ? "on" : "off") + " now"); }, iceState: function (p_state) { Janus.log("ICE state changed to " + p_state); }, mediaState: function (p_medium, p_on, p_mid) { Janus.log("Janus " + (p_on ? "started" : "stopped") + " receiving our " + p_medium + " (mid=" + p_mid + ")"); }, webrtcState: function (p_on) { Janus.log("Janus WebRTC peer connection is " + (p_on ? "up" : "down") + " now"); $("#streamscreen").parent().parent().unblock(); if (p_on) { Janus.log("your screen sharing session just started: pass the \"" + room + "\" session identifier to those who want to attend."); _on_screen_shared(room); } else { Janus.log("your screen sharing session just stopped"); janus.destroy(); } }, slowLink: function (p_uplink, p_lost, p_mid) { Janus.log("Janus reports problems " + (p_uplink ? "sending" : "receiving") + " packets on mid " + p_mid + " (" + p_lost + " lost packets)"); }, onmessage: function (p_msg, p_jsep) { Janus.debug("got a message (publisher): ", p_msg); var _event = p_msg["videoroom"]; Janus.debug("event: " + _event); if (_event) { if (_event === "joined") { id = p_msg["id"]; Janus.log("successfully joined room " + p_msg["room"] + " with ID " + id); if (role === "publisher") { Janus.debug("negotiating WebRTC stream for our screen (capture " + capture + ")"); if (Janus.webRTCAdapter.browserDetails.browser === "safari") { window.alert("Safari requires a user gesture before the screen can be shared: close this dialog to do that"); screen.createOffer( { tracks: [ { type: 'audio', capture: true, recv: false }, { type: 'screen', capture: true, recv: false } ], success: function (p_jsep) { Janus.debug("Got publisher SDP!", p_jsep); var _publish = { request: "configure", audio: true, video: true }; screen.send({ message: _publish, jsep: p_jsep }); }, error: function (p_error) { Janus.error("WebRTC error:", p_error.message); } }); } else { screen.createOffer( { tracks: [ { type: 'audio', capture: true, recv: false }, { type: 'screen', capture: true, recv: false } ], success: function (p_jsep) { Janus.debug("got publisher SDP!", p_jsep); var _publish = { request: "configure", audio: true, video: true }; screen.send({ message: _publish, jsep: p_jsep }); }, error: function (p_error) { Janus.error("WebRTC error:", p_error); } }); } } else { if (p_msg["publishers"]) { var _list = p_msg["publishers"]; Janus.debug("got a list of available publishers/feeds:", _list); for (var f in _list) { if (_list[f]["dummy"]) continue; var _id = _list[f]["id"]; var _display = _list[f]["display"]; Janus.debug("  >> [" + _id + "] " + _display); new_remote_feed(_id, _display) } } } } else if (_event === "event") { if (role === "listener" && p_msg["publishers"]) { var _list = p_msg["publishers"]; Janus.debug("got a list of available publishers/feeds:", _list); for (var f in _list) { if (_list[f]["dummy"]) continue; var _id = _list[f]["id"]; var _display = _list[f]["display"]; Janus.debug("  >> [" + _id + "] " + _display); new_remote_feed(_id, _display) } } else if (p_msg["leaving"]) { var _leaving = p_msg["leaving"]; Janus.log("publisher left: " + _leaving); if (role === "listener" && p_msg["leaving"] === source) { Janus.error("the screen sharing session is over, the publisher left"); } } else if (p_msg["error"]) { Janus.error(p_msg["error"]); } } } if (p_jsep) { Janus.debug("handling SDP as well ", p_jsep); screen.handleRemoteJsep({ jsep: p_jsep }); } }, onlocaltrack: function (p_track, p_on) { Janus.debug("local track " + (p_on ? "added" : "removed") + ":", p_track); var _track_id = p_track.id.replace(/[{}]/g, ""); if (!p_on) { var _stream = local_tracks[_track_id]; if (_stream) { try { var _tracks = _stream.getTracks(); for (var _t in _tracks) { var _mst = _tracks[_t]; if (_mst) { _mst.stop(); } } } catch (p_e) { } } if (p_track.kind === "video") { $('#screenvideo' + _track_id).remove(); local_videos--; if (local_videos === 0) { if ($('#streamscreen .no-video-container').length === 0) { Janus.log("No webcam available"); } } } delete local_tracks[_track_id]; return; } var _stream = local_tracks[_track_id]; if (_stream) { return; } if (p_track.kind === "audio") { if (local_videos === 0) { if ($('#streamscreen .no-video-container').length === 0) { Janus.log("No webcam available"); } } } else { local_videos++; $('#streamscreen .no-video-container').remove(); _stream = new MediaStream([p_track]); local_tracks[_track_id] = _stream; Janus.log("Created local stream:", _stream); $('#streamscreen').append('<video muted="muted" id="screenvideo' + _track_id + '" width=100% autoplay playsinline muted="muted"/>'); Janus.attachMediaStream($('#screenvideo' + _track_id).get(0), _stream); } if (screen.webrtcStuff.pc.iceConnectionState !== "completed" && screen.webrtcStuff.pc.iceConnectionState !== "connected") { $("#streamscreen").parent().parent().block({ message: '<b>Publishing...</b>', css: { border: 'none', backgroundColor: 'transparent', color: 'white' } }); } }, onremotetrack: function (track, mid, on) { }, oncleanup: function () { Janus.log("got a cleanup notification"); $('#streamscreen').empty(); $("#streamscreen").parent().unblock(); local_tracks = {}; local_videos = 0; } }); }, error: function (error) { Janus.error(error); }, destroyed: function () { Janus.log("Janus session id:" + id + " destroyed"); } }); new_remote_feed = function (p_id, p_display) { source = p_id; var _remote_feed = null; janus.attach({ plugin: "janus.plugin.videoroom", opaqueId: opaque_id, success: function (p_plugin_handle) { _remote_feed = p_plugin_handle; _remote_feed.remote_tracks = {}; _remote_feed.remote_videos = 0; Janus.log("plugin attached! (" + _remote_feed.getPlugin() + ", id=" + _remote_feed.getId() + ")"); Janus.log("this is a subscriber"); var _listen = { request: "join", room: room, ptype: "subscriber", feed: p_id }; _remote_feed.send({ message: _listen }); }, error: function (p_error) { Janus.error("error attaching plugin: ", p_error); }, iceState: function (p_state) { Janus.log("ICE state (feed #" + _remote_feed.rfindex + ") changed to " + p_state); }, webrtcState: function (p_on) { Janus.log("Janus says this WebRTC PeerConnection (feed #" + _remote_feed.rfindex + ") is " + (p_on ? "up" : "down") + " now"); }, slowLink: function (p_uplink, p_lost, p_mid) { Janus.warn("Janus reports problems " + (p_uplink ? "sending" : "receiving") + " packets on mid " + p_mid + " (" + p_lost + " lost packets)"); }, onmessage: function (p_msg, p_jsep) { Janus.debug("got a message (listener): ", p_msg); var _event = p_msg["videoroom"]; Janus.debug("Janus event: " + _event); if (_event) { if (_event === "attached") { if (!spinner) { var _target = document.getElementById('#streamscreen'); spinner = new Spinner({ top: 100 }).spin(_target); } else { spinner.spin(); } Janus.log("successfully attached to feed " + id + " (" + p_display + ") in room " + p_msg["room"]); } } if (p_jsep) { Janus.debug("handling SDP as well: ", p_jsep); _remote_feed.createAnswer( { jsep: p_jsep, tracks: [ { type: 'data' } ], success: function (p_jsep) { Janus.debug("got SDP!", p_jsep); var _body = { request: "start", room: room }; _remote_feed.send({ message: _body, jsep: p_jsep }); }, error: function (p_error) { Janus.error("WebRTC error:", p_error); } }); } }, onlocaltrack: function (p_track, p_on) { }, onremotetrack: function (p_track, p_mid, p_on) { Janus.debug("remote track (mid=" + p_mid + ") " + (p_on ? "added" : "removed") + ":", p_track); if (!p_on) { $('#screenvideo' + p_mid).remove(); if (p_track.kind === "video") { remote_videos--; if (remote_videos === 0) { if ($('#streamscreen .no-video-container').length === 0) { Janus.log("no remote video available"); } } } delete remote_tracks[p_mid]; return; } if (spinner !== undefined && spinner !== null) { spinner.stop(); spinner = null; } if (p_track.kind === "audio") { _stream = new MediaStream([p_track]); remote_tracks[p_mid] = _stream; Janus.log("created remote audio stream:", _stream); $('#streamscreen').append('<audio hidden id="screenvideo' + p_mid + '" playsinline/>'); $('#screenvideo' + p_mid).get(0).volume = 0; Janus.attachMediaStream($('#screenvideo' + p_mid).get(0), _stream); var _play_promise = $('#screenvideo' + p_mid).get(0).play(); if (_play_promise !== undefined) { _play_promise.then(_ => { $('#screenvideo' + p_mid).get(0).volume = 1; }) .catch(p_error => { }); } if (remote_videos === 0) { if ($('#streamscreen .no-video-container').length === 0) { Janus.log("no remote video available"); } } } else { remote_videos++; $('#streamscreen .no-video-container').remove(); _stream = new MediaStream([p_track]); _remote_feed.remote_tracks[p_mid] = _stream; Janus.log("created remote video stream:", _stream); $('#streamscreen').append('<video muted id="screenvideo' + p_mid + '" width=100% playsinline/>'); $('#screenvideo' + p_mid).get(0).volume = 0; Janus.attachMediaStream($('#screenvideo' + p_mid).get(0), _stream); var _play_promise = $('#screenvideo' + p_mid).get(0).play(); if (_play_promise !== undefined) { _play_promise.then(_ => { $('#screenvideo' + p_mid).get(0).volume = 1; }) .catch(p_error => { }); } } }, oncleanup: function () { Janus.log("got a cleanup notification (remote feed " + p_id + ")"); $('#waitingvideo').remove(); if (spinner) { spinner.stop(); } spinner = null; _remote_feed.remote_tracks = {}; _remote_feed.remote_videos = 0; } }); }; return 0; },  
- 97125: ($0, $1, $2) => { if (!Janus.isExtensionEnabled()) { Janus.error("this browser doesn't support screensharing (getDisplayMedia unavailable)"); return; } capture = "screen"; var _desc = "" + UTF8ToString($1); role = "publisher"; var create = {}; create.request= "create"; createdescription= _desc; create.bitrate= $2; createpublishers= 1; screen.send({ message: create, success: function (p_result) { if (p_result["error"]) { Janus.error("couldn't create room: " + p_result["error"]); return; } var _event = p_result["videoroom"]; Janus.debug("Event: " + _event); if (_event) { room = p_result["room"]; Janus.log("screen sharing session created: " + room); var _username = "" + UTF8ToString($0); var _register = { request: "join", room: room, ptype: "publisher", display: _username }; screen.send({ message: _register }); } } }); return 0; },  
- 97949: ($0, $1) => { room = $0; role = "listener"; var _username = "" + UTF8ToString($1); var _register = {}; _register.request= "join"; _register.room= room; _register.ptype= "publisher"; _register.display= _username; screen.send({ message: _register }); return 0; }
+  86684: ($0) => { var _debug = ""; if ($0 === 1) { _debug = "all"; } Janus.init({ debug: _debug, callback: function () { if (!Janus.isWebrtcSupported()) { console.error("No WebRTC support"); return 1; } } }); capture = null; id = null; local_tracks = {}; local_videos = 0; remote_tracks = {}; remote_videos = 0; role = null; room = null; screen = null; source = null; spinner = null; var _char_set = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; opaque_id = ""; for (var i = 0; i < 11; i++) { var _random_pos = Math.floor(Math.random() * _char_set.length); opaque_id += _char_set.substring(_random_pos, _random_pos + 1); } janus = new Janus({ server: server, iceServers: ice_servers, success: function () { janus.attach({ plugin: "janus.plugin.videoroom", opaqueId: opaque_id, success: function (p_plugin_handle) { screen = p_plugin_handle; Janus.log("plugin attached! (" + screen.getPlugin() + ", id=" + screen.getId() + ")"); _on_init_callback(0); }, error: function (p_error) { Janus.error("error attaching plugin: ", p_error); _on_init_callback(1); }, consentDialog: function (p_on) { Janus.debug("consent dialog should be " + (p_on ? "on" : "off") + " now"); }, iceState: function (p_state) { Janus.log("ICE state changed to " + p_state); }, mediaState: function (p_medium, p_on, p_mid) { Janus.log("Janus " + (p_on ? "started" : "stopped") + " receiving our " + p_medium + " (mid=" + p_mid + ")"); }, webrtcState: function (p_on) { Janus.log("Janus WebRTC peer connection is " + (p_on ? "up" : "down") + " now"); $("#streamscreen").parent().parent().unblock(); if (p_on) { Janus.log("your screen sharing session just started: pass the \"" + room + "\" session identifier to those who want to attend."); _on_screen_shared(room); } else { Janus.log("your screen sharing session just stopped"); janus.destroy(); } }, slowLink: function (p_uplink, p_lost, p_mid) { Janus.log("Janus reports problems " + (p_uplink ? "sending" : "receiving") + " packets on mid " + p_mid + " (" + p_lost + " lost packets)"); }, onmessage: function (p_msg, p_jsep) { Janus.debug("got a message (publisher): ", p_msg); var _event = p_msg["videoroom"]; Janus.debug("event: " + _event); if (_event) { if (_event === "joined") { id = p_msg["id"]; Janus.log("successfully joined room " + p_msg["room"] + " with ID " + id); if (role === "publisher") { Janus.debug("negotiating WebRTC stream for our screen (capture " + capture + ")"); if (Janus.webRTCAdapter.browserDetails.browser === "safari") { window.alert("Safari requires a user gesture before the screen can be shared: close this dialog to do that"); screen.createOffer({ tracks: [{ type: 'audio', capture: true, recv: false }, { type: 'screen', capture: true, recv: false }], success: function (p_jsep) { Janus.debug("Got publisher SDP!", p_jsep); var _publish = { request: "configure", audio: true, video: true }; screen.send({ message: _publish, jsep: p_jsep }); }, error: function (p_error) { Janus.error("WebRTC error:", p_error.message); } }); } else { screen.createOffer({ tracks: [{ type: 'audio', capture: true, recv: false }, { type: 'screen', capture: true, recv: false }], success: function (p_jsep) { Janus.debug("got publisher SDP!", p_jsep); var _publish = { request: "configure", audio: true, video: true }; screen.send({ message: _publish, jsep: p_jsep }); }, error: function (p_error) { Janus.error("WebRTC error:", p_error); } }); } } else { if (p_msg["publishers"]) { var _list = p_msg["publishers"]; Janus.debug("got a list of available publishers/feeds:", _list); for (var f in _list) { if (_list[f]["dummy"]) continue; var _id = _list[f]["id"]; var _display = _list[f]["display"]; Janus.debug("  >> [" + _id + "] " + _display); new_remote_feed(_id, _display) } } } } else if (_event === "event") { if (role === "listener" && p_msg["publishers"]) { var _list = p_msg["publishers"]; Janus.debug("got a list of available publishers/feeds:", _list); for (var f in _list) { if (_list[f]["dummy"]) continue; var _id = _list[f]["id"]; var _display = _list[f]["display"]; Janus.debug("  >> [" + _id + "] " + _display); new_remote_feed(_id, _display) } } else if (p_msg["leaving"]) { var _leaving = p_msg["leaving"]; Janus.log("publisher left: " + _leaving); if (role === "listener" && p_msg["leaving"] === source) { Janus.error("the screen sharing session is over, the publisher left"); } } else if (p_msg["error"]) { Janus.error(p_msg["error"]); } } } if (p_jsep) { Janus.debug("handling SDP as well ", p_jsep); screen.handleRemoteJsep({ jsep: p_jsep }); } }, onlocaltrack: function (p_track, p_on) { Janus.debug("local track " + (p_on ? "added" : "removed") + ":", p_track); var _track_id = p_track.id.replace(/[{}]/g, ""); if (!p_on) { var _stream = local_tracks[_track_id]; if (_stream) { try { var _tracks = _stream.getTracks(); for (var _t in _tracks) { var _mst = _tracks[_t]; if (_mst) { _mst.stop(); } } } catch (p_e) { } } if (p_track.kind === "video") { $('#screenvideo' + _track_id).remove(); local_videos--; if (local_videos === 0) { if ($('#streamscreen .no-video-container').length === 0) { Janus.log("No webcam available"); } } } delete local_tracks[_track_id]; return; } var _stream = local_tracks[_track_id]; if (_stream) { return; } if (p_track.kind === "audio") { if (local_videos === 0) { if ($('#streamscreen .no-video-container').length === 0) { Janus.log("No webcam available"); } } } else { local_videos++; $('#streamscreen .no-video-container').remove(); _stream = new MediaStream([p_track]); local_tracks[_track_id] = _stream; Janus.log("Created local stream:", _stream); $('#streamscreen').append('<video muted="muted" id="screenvideo' + _track_id + '" width=100% autoplay playsinline muted="muted"/>'); Janus.attachMediaStream($('#screenvideo' + _track_id).get(0), _stream); } if (screen.webrtcStuff.pc.iceConnectionState !== "completed" && screen.webrtcStuff.pc.iceConnectionState !== "connected") { $("#streamscreen").parent().parent().block({ message: '<b>Publishing...</b>', css: { border: 'none', backgroundColor: 'transparent', color: 'white' } }); } }, onremotetrack: function (track, mid, on) { }, oncleanup: function () { Janus.log("got a cleanup notification"); $('#streamscreen').empty(); $("#streamscreen").parent().unblock(); local_tracks = {}; local_videos = 0; } }); }, error: function (error) { Janus.error(error); }, destroyed: function () { Janus.log("Janus session id:" + id + " destroyed"); } }); new_remote_feed = function (p_id, p_display) { source = p_id; var _remote_feed = null; janus.attach({ plugin: "janus.plugin.videoroom", opaqueId: opaque_id, success: function (p_plugin_handle) { _remote_feed = p_plugin_handle; _remote_feed.remote_tracks = {}; _remote_feed.remote_videos = 0; Janus.log("plugin attached! (" + _remote_feed.getPlugin() + ", id=" + _remote_feed.getId() + ")"); Janus.log("this is a subscriber"); var _listen = { request: "join", room: room, ptype: "subscriber", feed: p_id }; _remote_feed.send({ message: _listen }); }, error: function (p_error) { Janus.error("error attaching plugin: ", p_error); }, iceState: function (p_state) { Janus.log("ICE state (feed #" + _remote_feed.rfindex + ") changed to " + p_state); }, webrtcState: function (p_on) { Janus.log("Janus says this WebRTC PeerConnection (feed #" + _remote_feed.rfindex + ") is " + (p_on ? "up" : "down") + " now"); }, slowLink: function (p_uplink, p_lost, p_mid) { Janus.warn("Janus reports problems " + (p_uplink ? "sending" : "receiving") + " packets on mid " + p_mid + " (" + p_lost + " lost packets)"); }, onmessage: function (p_msg, p_jsep) { Janus.debug("got a message (listener): ", p_msg); var _event = p_msg["videoroom"]; Janus.debug("Janus event: " + _event); if (_event) { if (_event === "attached") { if (!spinner) { var _target = document.getElementById('#streamscreen'); spinner = new Spinner({ top: 100 }).spin(_target); } else { spinner.spin(); } Janus.log("successfully attached to feed " + id + " (" + p_display + ") in room " + p_msg["room"]); } } if (p_jsep) { Janus.debug("handling SDP as well: ", p_jsep); _remote_feed.createAnswer({ jsep: p_jsep, tracks: [{ type: 'data' }], success: function (p_jsep) { Janus.debug("got SDP!", p_jsep); var _body = { request: "start", room: room }; _remote_feed.send({ message: _body, jsep: p_jsep }); }, error: function (p_error) { Janus.error("WebRTC error:", p_error); } }); } }, onlocaltrack: function (p_track, p_on) { }, onremotetrack: function (p_track, p_mid, p_on) { Janus.debug("remote track (mid=" + p_mid + ") " + (p_on ? "added" : "removed") + ":", p_track); if (!p_on) { $('#screenvideo' + p_mid).remove(); if (p_track.kind === "video") { remote_videos--; if (remote_videos === 0) { if ($('#streamscreen .no-video-container').length === 0) { Janus.log("no remote video available"); } } } delete remote_tracks[p_mid]; return; } if (spinner !== undefined && spinner !== null) { spinner.stop(); spinner = null; } if (p_track.kind === "audio") { _stream = new MediaStream([p_track]); remote_tracks[p_mid] = _stream; Janus.log("created remote audio stream:", _stream); $('#streamscreen').append('<audio hidden id="screenvideo' + p_mid + '" playsinline/>'); $('#screenvideo' + p_mid).get(0).volume = 0; Janus.attachMediaStream($('#screenvideo' + p_mid).get(0), _stream); var _play_promise = $('#screenvideo' + p_mid).get(0).play(); if (_play_promise !== undefined) { _play_promise.then(_ => { $('#screenvideo' + p_mid).get(0).volume = 1; }).catch(p_error => { }); } if (remote_videos === 0) { if ($('#streamscreen .no-video-container').length === 0) { Janus.log("no remote video available"); } } } else { remote_videos++; $('#streamscreen .no-video-container').remove(); _stream = new MediaStream([p_track]); _remote_feed.remote_tracks[p_mid] = _stream; Janus.log("created remote video stream:", _stream); $('#streamscreen').append('<video muted id="screenvideo' + p_mid + '" width=100% playsinline/>'); $('#screenvideo' + p_mid).get(0).volume = 0; Janus.attachMediaStream($('#screenvideo' + p_mid).get(0), _stream); var _play_promise = $('#screenvideo' + p_mid).get(0).play(); if (_play_promise !== undefined) { _play_promise.then(_ => { $('#screenvideo' + p_mid).get(0).volume = 1; }).catch(p_error => { }); } } }, oncleanup: function () { Janus.log("got a cleanup notification (remote feed " + p_id + ")"); $('#waitingvideo').remove(); if (spinner) { spinner.stop(); } spinner = null; _remote_feed.remote_tracks = {}; _remote_feed.remote_videos = 0; } }); }; return 0; },
+  97125: ($0, $1, $2) => { if (!Janus.isExtensionEnabled()) { Janus.error("this browser doesn't support screensharing (getDisplayMedia unavailable)"); return; } capture = "screen"; var _desc = "" + UTF8ToString($1); role = "publisher"; var create = {}; create.request = "create"; createdescription = _desc; create.bitrate = $2; createpublishers = 1; screen.send({ message: create, success: function (p_result) { if (p_result["error"]) { Janus.error("couldn't create room: " + p_result["error"]); return; } var _event = p_result["videoroom"]; Janus.debug("Event: " + _event); if (_event) { room = p_result["room"]; Janus.log("screen sharing session created: " + room); var _username = "" + UTF8ToString($0); var _register = { request: "join", room: room, ptype: "publisher", display: _username }; screen.send({ message: _register }); } } }); return 0; },
+  97949: ($0, $1) => { room = $0; role = "listener"; var _username = "" + UTF8ToString($1); var _register = {}; _register.request = "join"; _register.room = room; _register.ptype = "publisher"; _register.display = _username; screen.send({ message: _register }); return 0; }
 };
 
 
 
 
 
-  /** @constructor */
-  function ExitStatus(status) {
-      this.name = 'ExitStatus';
-      this.message = 'Program terminated with exit(' + status + ')';
-      this.status = status;
-    }
+/** @constructor */
+function ExitStatus(status) {
+  this.name = 'ExitStatus';
+  this.message = 'Program terminated with exit(' + status + ')';
+  this.status = status;
+}
 
-  function callRuntimeCallbacks(callbacks) {
-      while (callbacks.length > 0) {
-        // Pass the module as the first argument.
-        callbacks.shift()(Module);
-      }
-    }
-
-  
-    /**
-     * @param {number} ptr
-     * @param {string} type
-     */
-  function getValue(ptr, type = 'i8') {
-      if (type.endsWith('*')) type = '*';
-      switch (type) {
-        case 'i1': return HEAP8[((ptr)>>0)];
-        case 'i8': return HEAP8[((ptr)>>0)];
-        case 'i16': return HEAP16[((ptr)>>1)];
-        case 'i32': return HEAP32[((ptr)>>2)];
-        case 'i64': return HEAP32[((ptr)>>2)];
-        case 'float': return HEAPF32[((ptr)>>2)];
-        case 'double': return HEAPF64[((ptr)>>3)];
-        case '*': return HEAPU32[((ptr)>>2)];
-        default: abort('invalid type for getValue: ' + type);
-      }
-      return null;
-    }
-
-  function ptrToString(ptr) {
-      assert(typeof ptr === 'number');
-      return '0x' + ptr.toString(16).padStart(8, '0');
-    }
-
-  
-    /**
-     * @param {number} ptr
-     * @param {number} value
-     * @param {string} type
-     */
-  function setValue(ptr, value, type = 'i8') {
-      if (type.endsWith('*')) type = '*';
-      switch (type) {
-        case 'i1': HEAP8[((ptr)>>0)] = value; break;
-        case 'i8': HEAP8[((ptr)>>0)] = value; break;
-        case 'i16': HEAP16[((ptr)>>1)] = value; break;
-        case 'i32': HEAP32[((ptr)>>2)] = value; break;
-        case 'i64': (tempI64 = [value>>>0,(tempDouble=value,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[((ptr)>>2)] = tempI64[0],HEAP32[(((ptr)+(4))>>2)] = tempI64[1]); break;
-        case 'float': HEAPF32[((ptr)>>2)] = value; break;
-        case 'double': HEAPF64[((ptr)>>3)] = value; break;
-        case '*': HEAPU32[((ptr)>>2)] = value; break;
-        default: abort('invalid type for setValue: ' + type);
-      }
-    }
-
-  function warnOnce(text) {
-      if (!warnOnce.shown) warnOnce.shown = {};
-      if (!warnOnce.shown[text]) {
-        warnOnce.shown[text] = 1;
-        if (ENVIRONMENT_IS_NODE) text = 'warning: ' + text;
-        err(text);
-      }
-    }
-
-  function ___assert_fail(condition, filename, line, func) {
-      abort('Assertion failed: ' + UTF8ToString(condition) + ', at: ' + [filename ? UTF8ToString(filename) : 'unknown filename', line, func ? UTF8ToString(func) : 'unknown function']);
-    }
-
-  var exceptionCaught =  [];
-  
-  function exception_addRef(info) {
-      info.add_ref();
-    }
-  
-  var uncaughtExceptionCount = 0;
-  function ___cxa_begin_catch(ptr) {
-      var info = new ExceptionInfo(ptr);
-      if (!info.get_caught()) {
-        info.set_caught(true);
-        uncaughtExceptionCount--;
-      }
-      info.set_rethrown(false);
-      exceptionCaught.push(info);
-      exception_addRef(info);
-      return info.get_exception_ptr();
-    }
-
-  
-  var exceptionLast = 0;
-  
-  
-  var wasmTableMirror = [];
-  
-  function getWasmTableEntry(funcPtr) {
-      var func = wasmTableMirror[funcPtr];
-      if (!func) {
-        if (funcPtr >= wasmTableMirror.length) wasmTableMirror.length = funcPtr + 1;
-        wasmTableMirror[funcPtr] = func = wasmTable.get(funcPtr);
-      }
-      assert(wasmTable.get(funcPtr) == func, "JavaScript-side Wasm function table mirror is out of date!");
-      return func;
-    }
-  function exception_decRef(info) {
-      // A rethrown exception can reach refcount 0; it must not be discarded
-      // Its next handler will clear the rethrown flag and addRef it, prior to
-      // final decRef and destruction here
-      if (info.release_ref() && !info.get_rethrown()) {
-        var destructor = info.get_destructor();
-        if (destructor) {
-          // In Wasm, destructors return 'this' as in ARM
-          getWasmTableEntry(destructor)(info.excPtr);
-        }
-        ___cxa_free_exception(info.excPtr);
-      }
-    }
-  function ___cxa_end_catch() {
-      // Clear state flag.
-      _setThrew(0);
-      assert(exceptionCaught.length > 0);
-      // Call destructor if one is registered then clear it.
-      var info = exceptionCaught.pop();
-  
-      exception_decRef(info);
-      exceptionLast = 0; // XXX in decRef?
-    }
-
-  
-  /** @constructor */
-  function ExceptionInfo(excPtr) {
-      this.excPtr = excPtr;
-      this.ptr = excPtr - 24;
-  
-      this.set_type = function(type) {
-        HEAPU32[(((this.ptr)+(4))>>2)] = type;
-      };
-  
-      this.get_type = function() {
-        return HEAPU32[(((this.ptr)+(4))>>2)];
-      };
-  
-      this.set_destructor = function(destructor) {
-        HEAPU32[(((this.ptr)+(8))>>2)] = destructor;
-      };
-  
-      this.get_destructor = function() {
-        return HEAPU32[(((this.ptr)+(8))>>2)];
-      };
-  
-      this.set_refcount = function(refcount) {
-        HEAP32[((this.ptr)>>2)] = refcount;
-      };
-  
-      this.set_caught = function (caught) {
-        caught = caught ? 1 : 0;
-        HEAP8[(((this.ptr)+(12))>>0)] = caught;
-      };
-  
-      this.get_caught = function () {
-        return HEAP8[(((this.ptr)+(12))>>0)] != 0;
-      };
-  
-      this.set_rethrown = function (rethrown) {
-        rethrown = rethrown ? 1 : 0;
-        HEAP8[(((this.ptr)+(13))>>0)] = rethrown;
-      };
-  
-      this.get_rethrown = function () {
-        return HEAP8[(((this.ptr)+(13))>>0)] != 0;
-      };
-  
-      // Initialize native structure fields. Should be called once after allocated.
-      this.init = function(type, destructor) {
-        this.set_adjusted_ptr(0);
-        this.set_type(type);
-        this.set_destructor(destructor);
-        this.set_refcount(0);
-        this.set_caught(false);
-        this.set_rethrown(false);
-      }
-  
-      this.add_ref = function() {
-        var value = HEAP32[((this.ptr)>>2)];
-        HEAP32[((this.ptr)>>2)] = value + 1;
-      };
-  
-      // Returns true if last reference released.
-      this.release_ref = function() {
-        var prev = HEAP32[((this.ptr)>>2)];
-        HEAP32[((this.ptr)>>2)] = prev - 1;
-        assert(prev > 0);
-        return prev === 1;
-      };
-  
-      this.set_adjusted_ptr = function(adjustedPtr) {
-        HEAPU32[(((this.ptr)+(16))>>2)] = adjustedPtr;
-      };
-  
-      this.get_adjusted_ptr = function() {
-        return HEAPU32[(((this.ptr)+(16))>>2)];
-      };
-  
-      // Get pointer which is expected to be received by catch clause in C++ code. It may be adjusted
-      // when the pointer is casted to some of the exception object base classes (e.g. when virtual
-      // inheritance is used). When a pointer is thrown this method should return the thrown pointer
-      // itself.
-      this.get_exception_ptr = function() {
-        // Work around a fastcomp bug, this code is still included for some reason in a build without
-        // exceptions support.
-        var isPointer = ___cxa_is_pointer_type(this.get_type());
-        if (isPointer) {
-          return HEAPU32[((this.excPtr)>>2)];
-        }
-        var adjusted = this.get_adjusted_ptr();
-        if (adjusted !== 0) return adjusted;
-        return this.excPtr;
-      };
-    }
-  
-  function ___resumeException(ptr) {
-      if (!exceptionLast) { exceptionLast = ptr; }
-      throw ptr + " - Exception catching is disabled, this exception cannot be caught. Compile with -sNO_DISABLE_EXCEPTION_CATCHING or -sEXCEPTION_CATCHING_ALLOWED=[..] to catch.";
-    }
-  
-  
-  function ___cxa_find_matching_catch_2() {
-      var thrown = exceptionLast;
-      if (!thrown) {
-        // just pass through the null ptr
-        setTempRet0(0);
-        return 0;
-      }
-      var info = new ExceptionInfo(thrown);
-      info.set_adjusted_ptr(thrown);
-      var thrownType = info.get_type();
-      if (!thrownType) {
-        // just pass through the thrown ptr
-        setTempRet0(0);
-        return thrown;
-      }
-  
-      // can_catch receives a **, add indirection
-      // The different catch blocks are denoted by different types.
-      // Due to inheritance, those types may not precisely match the
-      // type of the thrown object. Find one which matches, and
-      // return the type of the catch block which should be called.
-      for (var i = 0; i < arguments.length; i++) {
-        var caughtType = arguments[i];
-        if (caughtType === 0 || caughtType === thrownType) {
-          // Catch all clause matched or exactly the same type is caught
-          break;
-        }
-        var adjusted_ptr_addr = info.ptr + 16;
-        if (___cxa_can_catch(caughtType, thrownType, adjusted_ptr_addr)) {
-          setTempRet0(caughtType);
-          return thrown;
-        }
-      }
-      setTempRet0(thrownType);
-      return thrown;
-    }
-
-  
-  
-  
-  
-  function ___cxa_find_matching_catch_3() {
-      var thrown = exceptionLast;
-      if (!thrown) {
-        // just pass through the null ptr
-        setTempRet0(0);
-        return 0;
-      }
-      var info = new ExceptionInfo(thrown);
-      info.set_adjusted_ptr(thrown);
-      var thrownType = info.get_type();
-      if (!thrownType) {
-        // just pass through the thrown ptr
-        setTempRet0(0);
-        return thrown;
-      }
-  
-      // can_catch receives a **, add indirection
-      // The different catch blocks are denoted by different types.
-      // Due to inheritance, those types may not precisely match the
-      // type of the thrown object. Find one which matches, and
-      // return the type of the catch block which should be called.
-      for (var i = 0; i < arguments.length; i++) {
-        var caughtType = arguments[i];
-        if (caughtType === 0 || caughtType === thrownType) {
-          // Catch all clause matched or exactly the same type is caught
-          break;
-        }
-        var adjusted_ptr_addr = info.ptr + 16;
-        if (___cxa_can_catch(caughtType, thrownType, adjusted_ptr_addr)) {
-          setTempRet0(caughtType);
-          return thrown;
-        }
-      }
-      setTempRet0(thrownType);
-      return thrown;
-    }
-
-  
-  
-  function ___cxa_throw(ptr, type, destructor) {
-      var info = new ExceptionInfo(ptr);
-      // Initialize ExceptionInfo content after it was allocated in __cxa_allocate_exception.
-      info.init(type, destructor);
-      exceptionLast = ptr;
-      uncaughtExceptionCount++;
-      throw ptr + " - Exception catching is disabled, this exception cannot be caught. Compile with -sNO_DISABLE_EXCEPTION_CATCHING or -sEXCEPTION_CATCHING_ALLOWED=[..] to catch.";
-    }
-
-
-  function _abort() {
-      abort('native code called abort()');
-    }
-
-  var readEmAsmArgsArray = [];
-  function readEmAsmArgs(sigPtr, buf) {
-      // Nobody should have mutated _readEmAsmArgsArray underneath us to be something else than an array.
-      assert(Array.isArray(readEmAsmArgsArray));
-      // The input buffer is allocated on the stack, so it must be stack-aligned.
-      assert(buf % 16 == 0);
-      readEmAsmArgsArray.length = 0;
-      var ch;
-      // Most arguments are i32s, so shift the buffer pointer so it is a plain
-      // index into HEAP32.
-      buf >>= 2;
-      while (ch = HEAPU8[sigPtr++]) {
-        var chr = String.fromCharCode(ch);
-        var validChars = ['d', 'f', 'i'];
-        assert(validChars.includes(chr), 'Invalid character ' + ch + '("' + chr + '") in readEmAsmArgs! Use only [' + validChars + '], and do not specify "v" for void return argument.');
-        // Floats are always passed as doubles, and doubles and int64s take up 8
-        // bytes (two 32-bit slots) in memory, align reads to these:
-        buf += (ch != 105/*i*/) & buf;
-        readEmAsmArgsArray.push(
-          ch == 105/*i*/ ? HEAP32[buf] :
-         HEAPF64[buf++ >> 1]
-        );
-        ++buf;
-      }
-      return readEmAsmArgsArray;
-    }
-  function runEmAsmFunction(code, sigPtr, argbuf) {
-      var args = readEmAsmArgs(sigPtr, argbuf);
-      if (!ASM_CONSTS.hasOwnProperty(code)) abort('No EM_ASM constant found at address ' + code);
-      return ASM_CONSTS[code].apply(null, args);
-    }
-  function _emscripten_asm_const_int(code, sigPtr, argbuf) {
-      return runEmAsmFunction(code, sigPtr, argbuf);
-    }
-
-  function reallyNegative(x) {
-      return x < 0 || (x === 0 && (1/x) === -Infinity);
-    }
-  
-  function convertI32PairToI53(lo, hi) {
-      // This function should not be getting called with too large unsigned numbers
-      // in high part (if hi >= 0x7FFFFFFFF, one should have been calling
-      // convertU32PairToI53())
-      assert(hi === (hi|0));
-      return (lo >>> 0) + hi * 4294967296;
-    }
-  
-  function convertU32PairToI53(lo, hi) {
-      return (lo >>> 0) + (hi >>> 0) * 4294967296;
-    }
-  
-  function reSign(value, bits) {
-      if (value <= 0) {
-        return value;
-      }
-      var half = bits <= 32 ? Math.abs(1 << (bits-1)) // abs is needed if bits == 32
-                            : Math.pow(2, bits-1);
-      // for huge values, we can hit the precision limit and always get true here.
-      // so don't do that but, in general there is no perfect solution here. With
-      // 64-bit ints, we get rounding and errors
-      // TODO: In i64 mode 1, resign the two parts separately and safely
-      if (value >= half && (bits <= 32 || value > half)) {
-        // Cannot bitshift half, as it may be at the limit of the bits JS uses in
-        // bitshifts
-        value = -2*half + value;
-      }
-      return value;
-    }
-  
-  function unSign(value, bits) {
-      if (value >= 0) {
-        return value;
-      }
-      // Need some trickery, since if bits == 32, we are right at the limit of the
-      // bits JS uses in bitshifts
-      return bits <= 32 ? 2*Math.abs(1 << (bits-1)) + value
-                        : Math.pow(2, bits)         + value;
-    }
-  
-  function strLen(ptr) {
-      var end = ptr;
-      while (HEAPU8[end]) ++end;
-      return end - ptr;
-    }
-  
-  /** @type {function(string, boolean=, number=)} */
-  function intArrayFromString(stringy, dontAddNull, length) {
-    var len = length > 0 ? length : lengthBytesUTF8(stringy)+1;
-    var u8array = new Array(len);
-    var numBytesWritten = stringToUTF8Array(stringy, u8array, 0, u8array.length);
-    if (dontAddNull) u8array.length = numBytesWritten;
-    return u8array;
+function callRuntimeCallbacks(callbacks) {
+  while (callbacks.length > 0) {
+    // Pass the module as the first argument.
+    callbacks.shift()(Module);
   }
-  function formatString(format, varargs) {
-      assert((varargs & 3) === 0);
-      var textIndex = format;
-      var argIndex = varargs;
-      // This must be called before reading a double or i64 vararg. It will bump the pointer properly.
-      // It also does an assert on i32 values, so it's nice to call it before all varargs calls.
-      function prepVararg(ptr, type) {
-        if (type === 'double' || type === 'i64') {
-          // move so the load is aligned
-          if (ptr & 7) {
-            assert((ptr & 7) === 4);
-            ptr += 4;
-          }
-        } else {
-          assert((ptr & 3) === 0);
-        }
-        return ptr;
+}
+
+
+/**
+ * @param {number} ptr
+ * @param {string} type
+ */
+function getValue(ptr, type = 'i8') {
+  if (type.endsWith('*')) type = '*';
+  switch (type) {
+    case 'i1': return HEAP8[((ptr) >> 0)];
+    case 'i8': return HEAP8[((ptr) >> 0)];
+    case 'i16': return HEAP16[((ptr) >> 1)];
+    case 'i32': return HEAP32[((ptr) >> 2)];
+    case 'i64': return HEAP32[((ptr) >> 2)];
+    case 'float': return HEAPF32[((ptr) >> 2)];
+    case 'double': return HEAPF64[((ptr) >> 3)];
+    case '*': return HEAPU32[((ptr) >> 2)];
+    default: abort('invalid type for getValue: ' + type);
+  }
+  return null;
+}
+
+function ptrToString(ptr) {
+  assert(typeof ptr === 'number');
+  return '0x' + ptr.toString(16).padStart(8, '0');
+}
+
+
+/**
+ * @param {number} ptr
+ * @param {number} value
+ * @param {string} type
+ */
+function setValue(ptr, value, type = 'i8') {
+  if (type.endsWith('*')) type = '*';
+  switch (type) {
+    case 'i1': HEAP8[((ptr) >> 0)] = value; break;
+    case 'i8': HEAP8[((ptr) >> 0)] = value; break;
+    case 'i16': HEAP16[((ptr) >> 1)] = value; break;
+    case 'i32': HEAP32[((ptr) >> 2)] = value; break;
+    case 'i64': (tempI64 = [value >>> 0, (tempDouble = value, (+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble) / 4294967296.0))), 4294967295.0)) | 0) >>> 0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble))) >>> 0)) / 4294967296.0))))) >>> 0) : 0)], HEAP32[((ptr) >> 2)] = tempI64[0], HEAP32[(((ptr) + (4)) >> 2)] = tempI64[1]); break;
+    case 'float': HEAPF32[((ptr) >> 2)] = value; break;
+    case 'double': HEAPF64[((ptr) >> 3)] = value; break;
+    case '*': HEAPU32[((ptr) >> 2)] = value; break;
+    default: abort('invalid type for setValue: ' + type);
+  }
+}
+
+function warnOnce(text) {
+  if (!warnOnce.shown) warnOnce.shown = {};
+  if (!warnOnce.shown[text]) {
+    warnOnce.shown[text] = 1;
+    if (ENVIRONMENT_IS_NODE) text = 'warning: ' + text;
+    err(text);
+  }
+}
+
+function ___assert_fail(condition, filename, line, func) {
+  abort('Assertion failed: ' + UTF8ToString(condition) + ', at: ' + [filename ? UTF8ToString(filename) : 'unknown filename', line, func ? UTF8ToString(func) : 'unknown function']);
+}
+
+var exceptionCaught = [];
+
+function exception_addRef(info) {
+  info.add_ref();
+}
+
+var uncaughtExceptionCount = 0;
+function ___cxa_begin_catch(ptr) {
+  var info = new ExceptionInfo(ptr);
+  if (!info.get_caught()) {
+    info.set_caught(true);
+    uncaughtExceptionCount--;
+  }
+  info.set_rethrown(false);
+  exceptionCaught.push(info);
+  exception_addRef(info);
+  return info.get_exception_ptr();
+}
+
+
+var exceptionLast = 0;
+
+
+var wasmTableMirror = [];
+
+function getWasmTableEntry(funcPtr) {
+  var func = wasmTableMirror[funcPtr];
+  if (!func) {
+    if (funcPtr >= wasmTableMirror.length) wasmTableMirror.length = funcPtr + 1;
+    wasmTableMirror[funcPtr] = func = wasmTable.get(funcPtr);
+  }
+  assert(wasmTable.get(funcPtr) == func, "JavaScript-side Wasm function table mirror is out of date!");
+  return func;
+}
+function exception_decRef(info) {
+  // A rethrown exception can reach refcount 0; it must not be discarded
+  // Its next handler will clear the rethrown flag and addRef it, prior to
+  // final decRef and destruction here
+  if (info.release_ref() && !info.get_rethrown()) {
+    var destructor = info.get_destructor();
+    if (destructor) {
+      // In Wasm, destructors return 'this' as in ARM
+      getWasmTableEntry(destructor)(info.excPtr);
+    }
+    ___cxa_free_exception(info.excPtr);
+  }
+}
+function ___cxa_end_catch() {
+  // Clear state flag.
+  _setThrew(0);
+  assert(exceptionCaught.length > 0);
+  // Call destructor if one is registered then clear it.
+  var info = exceptionCaught.pop();
+
+  exception_decRef(info);
+  exceptionLast = 0; // XXX in decRef?
+}
+
+
+/** @constructor */
+function ExceptionInfo(excPtr) {
+  this.excPtr = excPtr;
+  this.ptr = excPtr - 24;
+
+  this.set_type = function (type) {
+    HEAPU32[(((this.ptr) + (4)) >> 2)] = type;
+  };
+
+  this.get_type = function () {
+    return HEAPU32[(((this.ptr) + (4)) >> 2)];
+  };
+
+  this.set_destructor = function (destructor) {
+    HEAPU32[(((this.ptr) + (8)) >> 2)] = destructor;
+  };
+
+  this.get_destructor = function () {
+    return HEAPU32[(((this.ptr) + (8)) >> 2)];
+  };
+
+  this.set_refcount = function (refcount) {
+    HEAP32[((this.ptr) >> 2)] = refcount;
+  };
+
+  this.set_caught = function (caught) {
+    caught = caught ? 1 : 0;
+    HEAP8[(((this.ptr) + (12)) >> 0)] = caught;
+  };
+
+  this.get_caught = function () {
+    return HEAP8[(((this.ptr) + (12)) >> 0)] != 0;
+  };
+
+  this.set_rethrown = function (rethrown) {
+    rethrown = rethrown ? 1 : 0;
+    HEAP8[(((this.ptr) + (13)) >> 0)] = rethrown;
+  };
+
+  this.get_rethrown = function () {
+    return HEAP8[(((this.ptr) + (13)) >> 0)] != 0;
+  };
+
+  // Initialize native structure fields. Should be called once after allocated.
+  this.init = function (type, destructor) {
+    this.set_adjusted_ptr(0);
+    this.set_type(type);
+    this.set_destructor(destructor);
+    this.set_refcount(0);
+    this.set_caught(false);
+    this.set_rethrown(false);
+  }
+
+  this.add_ref = function () {
+    var value = HEAP32[((this.ptr) >> 2)];
+    HEAP32[((this.ptr) >> 2)] = value + 1;
+  };
+
+  // Returns true if last reference released.
+  this.release_ref = function () {
+    var prev = HEAP32[((this.ptr) >> 2)];
+    HEAP32[((this.ptr) >> 2)] = prev - 1;
+    assert(prev > 0);
+    return prev === 1;
+  };
+
+  this.set_adjusted_ptr = function (adjustedPtr) {
+    HEAPU32[(((this.ptr) + (16)) >> 2)] = adjustedPtr;
+  };
+
+  this.get_adjusted_ptr = function () {
+    return HEAPU32[(((this.ptr) + (16)) >> 2)];
+  };
+
+  // Get pointer which is expected to be received by catch clause in C++ code. It may be adjusted
+  // when the pointer is casted to some of the exception object base classes (e.g. when virtual
+  // inheritance is used). When a pointer is thrown this method should return the thrown pointer
+  // itself.
+  this.get_exception_ptr = function () {
+    // Work around a fastcomp bug, this code is still included for some reason in a build without
+    // exceptions support.
+    var isPointer = ___cxa_is_pointer_type(this.get_type());
+    if (isPointer) {
+      return HEAPU32[((this.excPtr) >> 2)];
+    }
+    var adjusted = this.get_adjusted_ptr();
+    if (adjusted !== 0) return adjusted;
+    return this.excPtr;
+  };
+}
+
+function ___resumeException(ptr) {
+  if (!exceptionLast) { exceptionLast = ptr; }
+  throw ptr + " - Exception catching is disabled, this exception cannot be caught. Compile with -sNO_DISABLE_EXCEPTION_CATCHING or -sEXCEPTION_CATCHING_ALLOWED=[..] to catch.";
+}
+
+
+function ___cxa_find_matching_catch_2() {
+  var thrown = exceptionLast;
+  if (!thrown) {
+    // just pass through the null ptr
+    setTempRet0(0);
+    return 0;
+  }
+  var info = new ExceptionInfo(thrown);
+  info.set_adjusted_ptr(thrown);
+  var thrownType = info.get_type();
+  if (!thrownType) {
+    // just pass through the thrown ptr
+    setTempRet0(0);
+    return thrown;
+  }
+
+  // can_catch receives a **, add indirection
+  // The different catch blocks are denoted by different types.
+  // Due to inheritance, those types may not precisely match the
+  // type of the thrown object. Find one which matches, and
+  // return the type of the catch block which should be called.
+  for (var i = 0; i < arguments.length; i++) {
+    var caughtType = arguments[i];
+    if (caughtType === 0 || caughtType === thrownType) {
+      // Catch all clause matched or exactly the same type is caught
+      break;
+    }
+    var adjusted_ptr_addr = info.ptr + 16;
+    if (___cxa_can_catch(caughtType, thrownType, adjusted_ptr_addr)) {
+      setTempRet0(caughtType);
+      return thrown;
+    }
+  }
+  setTempRet0(thrownType);
+  return thrown;
+}
+
+
+
+
+
+function ___cxa_find_matching_catch_3() {
+  var thrown = exceptionLast;
+  if (!thrown) {
+    // just pass through the null ptr
+    setTempRet0(0);
+    return 0;
+  }
+  var info = new ExceptionInfo(thrown);
+  info.set_adjusted_ptr(thrown);
+  var thrownType = info.get_type();
+  if (!thrownType) {
+    // just pass through the thrown ptr
+    setTempRet0(0);
+    return thrown;
+  }
+
+  // can_catch receives a **, add indirection
+  // The different catch blocks are denoted by different types.
+  // Due to inheritance, those types may not precisely match the
+  // type of the thrown object. Find one which matches, and
+  // return the type of the catch block which should be called.
+  for (var i = 0; i < arguments.length; i++) {
+    var caughtType = arguments[i];
+    if (caughtType === 0 || caughtType === thrownType) {
+      // Catch all clause matched or exactly the same type is caught
+      break;
+    }
+    var adjusted_ptr_addr = info.ptr + 16;
+    if (___cxa_can_catch(caughtType, thrownType, adjusted_ptr_addr)) {
+      setTempRet0(caughtType);
+      return thrown;
+    }
+  }
+  setTempRet0(thrownType);
+  return thrown;
+}
+
+
+
+function ___cxa_throw(ptr, type, destructor) {
+  var info = new ExceptionInfo(ptr);
+  // Initialize ExceptionInfo content after it was allocated in __cxa_allocate_exception.
+  info.init(type, destructor);
+  exceptionLast = ptr;
+  uncaughtExceptionCount++;
+  throw ptr + " - Exception catching is disabled, this exception cannot be caught. Compile with -sNO_DISABLE_EXCEPTION_CATCHING or -sEXCEPTION_CATCHING_ALLOWED=[..] to catch.";
+}
+
+
+function _abort() {
+  abort('native code called abort()');
+}
+
+var readEmAsmArgsArray = [];
+function readEmAsmArgs(sigPtr, buf) {
+  // Nobody should have mutated _readEmAsmArgsArray underneath us to be something else than an array.
+  assert(Array.isArray(readEmAsmArgsArray));
+  // The input buffer is allocated on the stack, so it must be stack-aligned.
+  assert(buf % 16 == 0);
+  readEmAsmArgsArray.length = 0;
+  var ch;
+  // Most arguments are i32s, so shift the buffer pointer so it is a plain
+  // index into HEAP32.
+  buf >>= 2;
+  while (ch = HEAPU8[sigPtr++]) {
+    var chr = String.fromCharCode(ch);
+    var validChars = ['d', 'f', 'i'];
+    assert(validChars.includes(chr), 'Invalid character ' + ch + '("' + chr + '") in readEmAsmArgs! Use only [' + validChars + '], and do not specify "v" for void return argument.');
+    // Floats are always passed as doubles, and doubles and int64s take up 8
+    // bytes (two 32-bit slots) in memory, align reads to these:
+    buf += (ch != 105/*i*/) & buf;
+    readEmAsmArgsArray.push(
+      ch == 105/*i*/ ? HEAP32[buf] :
+        HEAPF64[buf++ >> 1]
+    );
+    ++buf;
+  }
+  return readEmAsmArgsArray;
+}
+function runEmAsmFunction(code, sigPtr, argbuf) {
+  var args = readEmAsmArgs(sigPtr, argbuf);
+  if (!ASM_CONSTS.hasOwnProperty(code)) abort('No EM_ASM constant found at address ' + code);
+  return ASM_CONSTS[code].apply(null, args);
+}
+function _emscripten_asm_const_int(code, sigPtr, argbuf) {
+  return runEmAsmFunction(code, sigPtr, argbuf);
+}
+
+function reallyNegative(x) {
+  return x < 0 || (x === 0 && (1 / x) === -Infinity);
+}
+
+function convertI32PairToI53(lo, hi) {
+  // This function should not be getting called with too large unsigned numbers
+  // in high part (if hi >= 0x7FFFFFFFF, one should have been calling
+  // convertU32PairToI53())
+  assert(hi === (hi | 0));
+  return (lo >>> 0) + hi * 4294967296;
+}
+
+function convertU32PairToI53(lo, hi) {
+  return (lo >>> 0) + (hi >>> 0) * 4294967296;
+}
+
+function reSign(value, bits) {
+  if (value <= 0) {
+    return value;
+  }
+  var half = bits <= 32 ? Math.abs(1 << (bits - 1)) // abs is needed if bits == 32
+    : Math.pow(2, bits - 1);
+  // for huge values, we can hit the precision limit and always get true here.
+  // so don't do that but, in general there is no perfect solution here. With
+  // 64-bit ints, we get rounding and errors
+  // TODO: In i64 mode 1, resign the two parts separately and safely
+  if (value >= half && (bits <= 32 || value > half)) {
+    // Cannot bitshift half, as it may be at the limit of the bits JS uses in
+    // bitshifts
+    value = -2 * half + value;
+  }
+  return value;
+}
+
+function unSign(value, bits) {
+  if (value >= 0) {
+    return value;
+  }
+  // Need some trickery, since if bits == 32, we are right at the limit of the
+  // bits JS uses in bitshifts
+  return bits <= 32 ? 2 * Math.abs(1 << (bits - 1)) + value
+    : Math.pow(2, bits) + value;
+}
+
+function strLen(ptr) {
+  var end = ptr;
+  while (HEAPU8[end]) ++end;
+  return end - ptr;
+}
+
+/** @type {function(string, boolean=, number=)} */
+function intArrayFromString(stringy, dontAddNull, length) {
+  var len = length > 0 ? length : lengthBytesUTF8(stringy) + 1;
+  var u8array = new Array(len);
+  var numBytesWritten = stringToUTF8Array(stringy, u8array, 0, u8array.length);
+  if (dontAddNull) u8array.length = numBytesWritten;
+  return u8array;
+}
+function formatString(format, varargs) {
+  assert((varargs & 3) === 0);
+  var textIndex = format;
+  var argIndex = varargs;
+  // This must be called before reading a double or i64 vararg. It will bump the pointer properly.
+  // It also does an assert on i32 values, so it's nice to call it before all varargs calls.
+  function prepVararg(ptr, type) {
+    if (type === 'double' || type === 'i64') {
+      // move so the load is aligned
+      if (ptr & 7) {
+        assert((ptr & 7) === 4);
+        ptr += 4;
       }
-      function getNextArg(type) {
-        // NOTE: Explicitly ignoring type safety. Otherwise this fails:
-        //       int x = 4; printf("%c\n", (char)x);
-        var ret;
-        argIndex = prepVararg(argIndex, type);
-        if (type === 'double') {
-          ret = HEAPF64[((argIndex)>>3)];
-          argIndex += 8;
-        } else if (type == 'i64') {
-          ret = [HEAP32[((argIndex)>>2)],
-                 HEAP32[(((argIndex)+(4))>>2)]];
-          argIndex += 8;
-        } else {
-          assert((argIndex & 3) === 0);
-          type = 'i32'; // varargs are always i32, i64, or double
-          ret = HEAP32[((argIndex)>>2)];
-          argIndex += 4;
-        }
-        return ret;
-      }
-  
-      var ret = [];
-      var curr, next, currArg;
-      while (1) {
-        var startTextIndex = textIndex;
-        curr = HEAP8[((textIndex)>>0)];
-        if (curr === 0) break;
-        next = HEAP8[((textIndex+1)>>0)];
-        if (curr == 37) {
-          // Handle flags.
-          var flagAlwaysSigned = false;
-          var flagLeftAlign = false;
-          var flagAlternative = false;
-          var flagZeroPad = false;
-          var flagPadSign = false;
-          flagsLoop: while (1) {
-            switch (next) {
-              case 43:
-                flagAlwaysSigned = true;
-                break;
-              case 45:
-                flagLeftAlign = true;
-                break;
-              case 35:
-                flagAlternative = true;
-                break;
-              case 48:
-                if (flagZeroPad) {
-                  break flagsLoop;
-                } else {
-                  flagZeroPad = true;
-                  break;
-                }
-              case 32:
-                flagPadSign = true;
-                break;
-              default:
-                break flagsLoop;
-            }
-            textIndex++;
-            next = HEAP8[((textIndex+1)>>0)];
-          }
-  
-          // Handle width.
-          var width = 0;
-          if (next == 42) {
-            width = getNextArg('i32');
-            textIndex++;
-            next = HEAP8[((textIndex+1)>>0)];
-          } else {
-            while (next >= 48 && next <= 57) {
-              width = width * 10 + (next - 48);
-              textIndex++;
-              next = HEAP8[((textIndex+1)>>0)];
-            }
-          }
-  
-          // Handle precision.
-          var precisionSet = false, precision = -1;
-          if (next == 46) {
-            precision = 0;
-            precisionSet = true;
-            textIndex++;
-            next = HEAP8[((textIndex+1)>>0)];
-            if (next == 42) {
-              precision = getNextArg('i32');
-              textIndex++;
+    } else {
+      assert((ptr & 3) === 0);
+    }
+    return ptr;
+  }
+  function getNextArg(type) {
+    // NOTE: Explicitly ignoring type safety. Otherwise this fails:
+    //       int x = 4; printf("%c\n", (char)x);
+    var ret;
+    argIndex = prepVararg(argIndex, type);
+    if (type === 'double') {
+      ret = HEAPF64[((argIndex) >> 3)];
+      argIndex += 8;
+    } else if (type == 'i64') {
+      ret = [HEAP32[((argIndex) >> 2)],
+      HEAP32[(((argIndex) + (4)) >> 2)]];
+      argIndex += 8;
+    } else {
+      assert((argIndex & 3) === 0);
+      type = 'i32'; // varargs are always i32, i64, or double
+      ret = HEAP32[((argIndex) >> 2)];
+      argIndex += 4;
+    }
+    return ret;
+  }
+
+  var ret = [];
+  var curr, next, currArg;
+  while (1) {
+    var startTextIndex = textIndex;
+    curr = HEAP8[((textIndex) >> 0)];
+    if (curr === 0) break;
+    next = HEAP8[((textIndex + 1) >> 0)];
+    if (curr == 37) {
+      // Handle flags.
+      var flagAlwaysSigned = false;
+      var flagLeftAlign = false;
+      var flagAlternative = false;
+      var flagZeroPad = false;
+      var flagPadSign = false;
+      flagsLoop: while (1) {
+        switch (next) {
+          case 43:
+            flagAlwaysSigned = true;
+            break;
+          case 45:
+            flagLeftAlign = true;
+            break;
+          case 35:
+            flagAlternative = true;
+            break;
+          case 48:
+            if (flagZeroPad) {
+              break flagsLoop;
             } else {
-              while (1) {
-                var precisionChr = HEAP8[((textIndex+1)>>0)];
-                if (precisionChr < 48 ||
-                    precisionChr > 57) break;
-                precision = precision * 10 + (precisionChr - 48);
-                textIndex++;
-              }
-            }
-            next = HEAP8[((textIndex+1)>>0)];
-          }
-          if (precision < 0) {
-            precision = 6; // Standard default.
-            precisionSet = false;
-          }
-  
-          // Handle integer sizes. WARNING: These assume a 32-bit architecture!
-          var argSize;
-          switch (String.fromCharCode(next)) {
-            case 'h':
-              var nextNext = HEAP8[((textIndex+2)>>0)];
-              if (nextNext == 104) {
-                textIndex++;
-                argSize = 1; // char (actually i32 in varargs)
-              } else {
-                argSize = 2; // short (actually i32 in varargs)
-              }
-              break;
-            case 'l':
-              var nextNext = HEAP8[((textIndex+2)>>0)];
-              if (nextNext == 108) {
-                textIndex++;
-                argSize = 8; // long long
-              } else {
-                argSize = 4; // long
-              }
-              break;
-            case 'L': // long long
-            case 'q': // int64_t
-            case 'j': // intmax_t
-              argSize = 8;
-              break;
-            case 'z': // size_t
-            case 't': // ptrdiff_t
-            case 'I': // signed ptrdiff_t or unsigned size_t
-              argSize = 4;
-              break;
-            default:
-              argSize = null;
-          }
-          if (argSize) textIndex++;
-          next = HEAP8[((textIndex+1)>>0)];
-  
-          // Handle type specifier.
-          switch (String.fromCharCode(next)) {
-            case 'd': case 'i': case 'u': case 'o': case 'x': case 'X': case 'p': {
-              // Integer.
-              var signed = next == 100 || next == 105;
-              argSize = argSize || 4;
-              currArg = getNextArg('i' + (argSize * 8));
-              var argText;
-              // Flatten i64-1 [low, high] into a (slightly rounded) double
-              if (argSize == 8) {
-                currArg = next == 117 ? convertU32PairToI53(currArg[0], currArg[1]) : convertI32PairToI53(currArg[0], currArg[1]);
-              }
-              // Truncate to requested size.
-              if (argSize <= 4) {
-                var limit = Math.pow(256, argSize) - 1;
-                currArg = (signed ? reSign : unSign)(currArg & limit, argSize * 8);
-              }
-              // Format the number.
-              var currAbsArg = Math.abs(currArg);
-              var prefix = '';
-              if (next == 100 || next == 105) {
-                argText = reSign(currArg, 8 * argSize).toString(10);
-              } else if (next == 117) {
-                argText = unSign(currArg, 8 * argSize).toString(10);
-                currArg = Math.abs(currArg);
-              } else if (next == 111) {
-                argText = (flagAlternative ? '0' : '') + currAbsArg.toString(8);
-              } else if (next == 120 || next == 88) {
-                prefix = (flagAlternative && currArg != 0) ? '0x' : '';
-                if (currArg < 0) {
-                  // Represent negative numbers in hex as 2's complement.
-                  currArg = -currArg;
-                  argText = (currAbsArg - 1).toString(16);
-                  var buffer = [];
-                  for (var i = 0; i < argText.length; i++) {
-                    buffer.push((0xF - parseInt(argText[i], 16)).toString(16));
-                  }
-                  argText = buffer.join('');
-                  while (argText.length < argSize * 2) argText = 'f' + argText;
-                } else {
-                  argText = currAbsArg.toString(16);
-                }
-                if (next == 88) {
-                  prefix = prefix.toUpperCase();
-                  argText = argText.toUpperCase();
-                }
-              } else if (next == 112) {
-                if (currAbsArg === 0) {
-                  argText = '(nil)';
-                } else {
-                  prefix = '0x';
-                  argText = currAbsArg.toString(16);
-                }
-              }
-              if (precisionSet) {
-                while (argText.length < precision) {
-                  argText = '0' + argText;
-                }
-              }
-  
-              // Add sign if needed
-              if (currArg >= 0) {
-                if (flagAlwaysSigned) {
-                  prefix = '+' + prefix;
-                } else if (flagPadSign) {
-                  prefix = ' ' + prefix;
-                }
-              }
-  
-              // Move sign to prefix so we zero-pad after the sign
-              if (argText.charAt(0) == '-') {
-                prefix = '-' + prefix;
-                argText = argText.substr(1);
-              }
-  
-              // Add padding.
-              while (prefix.length + argText.length < width) {
-                if (flagLeftAlign) {
-                  argText += ' ';
-                } else {
-                  if (flagZeroPad) {
-                    argText = '0' + argText;
-                  } else {
-                    prefix = ' ' + prefix;
-                  }
-                }
-              }
-  
-              // Insert the result into the buffer.
-              argText = prefix + argText;
-              argText.split('').forEach(function(chr) {
-                ret.push(chr.charCodeAt(0));
-              });
+              flagZeroPad = true;
               break;
             }
-            case 'f': case 'F': case 'e': case 'E': case 'g': case 'G': {
-              // Float.
-              currArg = getNextArg('double');
-              var argText;
-              if (isNaN(currArg)) {
-                argText = 'nan';
-                flagZeroPad = false;
-              } else if (!isFinite(currArg)) {
-                argText = (currArg < 0 ? '-' : '') + 'inf';
-                flagZeroPad = false;
-              } else {
-                var isGeneral = false;
-                var effectivePrecision = Math.min(precision, 20);
-  
-                // Convert g/G to f/F or e/E, as per:
-                // http://pubs.opengroup.org/onlinepubs/9699919799/functions/printf.html
-                if (next == 103 || next == 71) {
-                  isGeneral = true;
-                  precision = precision || 1;
-                  var exponent = parseInt(currArg.toExponential(effectivePrecision).split('e')[1], 10);
-                  if (precision > exponent && exponent >= -4) {
-                    next = ((next == 103) ? 'f' : 'F').charCodeAt(0);
-                    precision -= exponent + 1;
-                  } else {
-                    next = ((next == 103) ? 'e' : 'E').charCodeAt(0);
-                    precision--;
-                  }
-                  effectivePrecision = Math.min(precision, 20);
-                }
-  
-                if (next == 101 || next == 69) {
-                  argText = currArg.toExponential(effectivePrecision);
-                  // Make sure the exponent has at least 2 digits.
-                  if (/[eE][-+]\d$/.test(argText)) {
-                    argText = argText.slice(0, -1) + '0' + argText.slice(-1);
-                  }
-                } else if (next == 102 || next == 70) {
-                  argText = currArg.toFixed(effectivePrecision);
-                  if (currArg === 0 && reallyNegative(currArg)) {
-                    argText = '-' + argText;
-                  }
-                }
-  
-                var parts = argText.split('e');
-                if (isGeneral && !flagAlternative) {
-                  // Discard trailing zeros and periods.
-                  while (parts[0].length > 1 && parts[0].includes('.') &&
-                         (parts[0].slice(-1) == '0' || parts[0].slice(-1) == '.')) {
-                    parts[0] = parts[0].slice(0, -1);
-                  }
-                } else {
-                  // Make sure we have a period in alternative mode.
-                  if (flagAlternative && argText.indexOf('.') == -1) parts[0] += '.';
-                  // Zero pad until required precision.
-                  while (precision > effectivePrecision++) parts[0] += '0';
-                }
-                argText = parts[0] + (parts.length > 1 ? 'e' + parts[1] : '');
-  
-                // Capitalize 'E' if needed.
-                if (next == 69) argText = argText.toUpperCase();
-  
-                // Add sign.
-                if (currArg >= 0) {
-                  if (flagAlwaysSigned) {
-                    argText = '+' + argText;
-                  } else if (flagPadSign) {
-                    argText = ' ' + argText;
-                  }
-                }
-              }
-  
-              // Add padding.
-              while (argText.length < width) {
-                if (flagLeftAlign) {
-                  argText += ' ';
-                } else {
-                  if (flagZeroPad && (argText[0] == '-' || argText[0] == '+')) {
-                    argText = argText[0] + '0' + argText.slice(1);
-                  } else {
-                    argText = (flagZeroPad ? '0' : ' ') + argText;
-                  }
-                }
-              }
-  
-              // Adjust case.
-              if (next < 97) argText = argText.toUpperCase();
-  
-              // Insert the result into the buffer.
-              argText.split('').forEach(function(chr) {
-                ret.push(chr.charCodeAt(0));
-              });
-              break;
-            }
-            case 's': {
-              // String.
-              var arg = getNextArg('i8*');
-              var argLength = arg ? strLen(arg) : '(null)'.length;
-              if (precisionSet) argLength = Math.min(argLength, precision);
-              if (!flagLeftAlign) {
-                while (argLength < width--) {
-                  ret.push(32);
-                }
-              }
-              if (arg) {
-                for (var i = 0; i < argLength; i++) {
-                  ret.push(HEAPU8[((arg++)>>0)]);
-                }
-              } else {
-                ret = ret.concat(intArrayFromString('(null)'.substr(0, argLength), true));
-              }
-              if (flagLeftAlign) {
-                while (argLength < width--) {
-                  ret.push(32);
-                }
-              }
-              break;
-            }
-            case 'c': {
-              // Character.
-              if (flagLeftAlign) ret.push(getNextArg('i8'));
-              while (--width > 0) {
-                ret.push(32);
-              }
-              if (!flagLeftAlign) ret.push(getNextArg('i8'));
-              break;
-            }
-            case 'n': {
-              // Write the length written so far to the next parameter.
-              var ptr = getNextArg('i32*');
-              HEAP32[((ptr)>>2)] = ret.length;
-              break;
-            }
-            case '%': {
-              // Literal percent sign.
-              ret.push(curr);
-              break;
-            }
-            default: {
-              // Unknown specifiers remain untouched.
-              for (var i = startTextIndex; i < textIndex + 2; i++) {
-                ret.push(HEAP8[((i)>>0)]);
-              }
-            }
-          }
-          textIndex += 2;
-          // TODO: Support a/A (hex float) and m (last error) specifiers.
-          // TODO: Support %1${specifier} for arg selection.
+          case 32:
+            flagPadSign = true;
+            break;
+          default:
+            break flagsLoop;
+        }
+        textIndex++;
+        next = HEAP8[((textIndex + 1) >> 0)];
+      }
+
+      // Handle width.
+      var width = 0;
+      if (next == 42) {
+        width = getNextArg('i32');
+        textIndex++;
+        next = HEAP8[((textIndex + 1) >> 0)];
+      } else {
+        while (next >= 48 && next <= 57) {
+          width = width * 10 + (next - 48);
+          textIndex++;
+          next = HEAP8[((textIndex + 1) >> 0)];
+        }
+      }
+
+      // Handle precision.
+      var precisionSet = false, precision = -1;
+      if (next == 46) {
+        precision = 0;
+        precisionSet = true;
+        textIndex++;
+        next = HEAP8[((textIndex + 1) >> 0)];
+        if (next == 42) {
+          precision = getNextArg('i32');
+          textIndex++;
         } else {
+          while (1) {
+            var precisionChr = HEAP8[((textIndex + 1) >> 0)];
+            if (precisionChr < 48 ||
+              precisionChr > 57) break;
+            precision = precision * 10 + (precisionChr - 48);
+            textIndex++;
+          }
+        }
+        next = HEAP8[((textIndex + 1) >> 0)];
+      }
+      if (precision < 0) {
+        precision = 6; // Standard default.
+        precisionSet = false;
+      }
+
+      // Handle integer sizes. WARNING: These assume a 32-bit architecture!
+      var argSize;
+      switch (String.fromCharCode(next)) {
+        case 'h':
+          var nextNext = HEAP8[((textIndex + 2) >> 0)];
+          if (nextNext == 104) {
+            textIndex++;
+            argSize = 1; // char (actually i32 in varargs)
+          } else {
+            argSize = 2; // short (actually i32 in varargs)
+          }
+          break;
+        case 'l':
+          var nextNext = HEAP8[((textIndex + 2) >> 0)];
+          if (nextNext == 108) {
+            textIndex++;
+            argSize = 8; // long long
+          } else {
+            argSize = 4; // long
+          }
+          break;
+        case 'L': // long long
+        case 'q': // int64_t
+        case 'j': // intmax_t
+          argSize = 8;
+          break;
+        case 'z': // size_t
+        case 't': // ptrdiff_t
+        case 'I': // signed ptrdiff_t or unsigned size_t
+          argSize = 4;
+          break;
+        default:
+          argSize = null;
+      }
+      if (argSize) textIndex++;
+      next = HEAP8[((textIndex + 1) >> 0)];
+
+      // Handle type specifier.
+      switch (String.fromCharCode(next)) {
+        case 'd': case 'i': case 'u': case 'o': case 'x': case 'X': case 'p': {
+          // Integer.
+          var signed = next == 100 || next == 105;
+          argSize = argSize || 4;
+          currArg = getNextArg('i' + (argSize * 8));
+          var argText;
+          // Flatten i64-1 [low, high] into a (slightly rounded) double
+          if (argSize == 8) {
+            currArg = next == 117 ? convertU32PairToI53(currArg[0], currArg[1]) : convertI32PairToI53(currArg[0], currArg[1]);
+          }
+          // Truncate to requested size.
+          if (argSize <= 4) {
+            var limit = Math.pow(256, argSize) - 1;
+            currArg = (signed ? reSign : unSign)(currArg & limit, argSize * 8);
+          }
+          // Format the number.
+          var currAbsArg = Math.abs(currArg);
+          var prefix = '';
+          if (next == 100 || next == 105) {
+            argText = reSign(currArg, 8 * argSize).toString(10);
+          } else if (next == 117) {
+            argText = unSign(currArg, 8 * argSize).toString(10);
+            currArg = Math.abs(currArg);
+          } else if (next == 111) {
+            argText = (flagAlternative ? '0' : '') + currAbsArg.toString(8);
+          } else if (next == 120 || next == 88) {
+            prefix = (flagAlternative && currArg != 0) ? '0x' : '';
+            if (currArg < 0) {
+              // Represent negative numbers in hex as 2's complement.
+              currArg = -currArg;
+              argText = (currAbsArg - 1).toString(16);
+              var buffer = [];
+              for (var i = 0; i < argText.length; i++) {
+                buffer.push((0xF - parseInt(argText[i], 16)).toString(16));
+              }
+              argText = buffer.join('');
+              while (argText.length < argSize * 2) argText = 'f' + argText;
+            } else {
+              argText = currAbsArg.toString(16);
+            }
+            if (next == 88) {
+              prefix = prefix.toUpperCase();
+              argText = argText.toUpperCase();
+            }
+          } else if (next == 112) {
+            if (currAbsArg === 0) {
+              argText = '(nil)';
+            } else {
+              prefix = '0x';
+              argText = currAbsArg.toString(16);
+            }
+          }
+          if (precisionSet) {
+            while (argText.length < precision) {
+              argText = '0' + argText;
+            }
+          }
+
+          // Add sign if needed
+          if (currArg >= 0) {
+            if (flagAlwaysSigned) {
+              prefix = '+' + prefix;
+            } else if (flagPadSign) {
+              prefix = ' ' + prefix;
+            }
+          }
+
+          // Move sign to prefix so we zero-pad after the sign
+          if (argText.charAt(0) == '-') {
+            prefix = '-' + prefix;
+            argText = argText.substr(1);
+          }
+
+          // Add padding.
+          while (prefix.length + argText.length < width) {
+            if (flagLeftAlign) {
+              argText += ' ';
+            } else {
+              if (flagZeroPad) {
+                argText = '0' + argText;
+              } else {
+                prefix = ' ' + prefix;
+              }
+            }
+          }
+
+          // Insert the result into the buffer.
+          argText = prefix + argText;
+          argText.split('').forEach(function (chr) {
+            ret.push(chr.charCodeAt(0));
+          });
+          break;
+        }
+        case 'f': case 'F': case 'e': case 'E': case 'g': case 'G': {
+          // Float.
+          currArg = getNextArg('double');
+          var argText;
+          if (isNaN(currArg)) {
+            argText = 'nan';
+            flagZeroPad = false;
+          } else if (!isFinite(currArg)) {
+            argText = (currArg < 0 ? '-' : '') + 'inf';
+            flagZeroPad = false;
+          } else {
+            var isGeneral = false;
+            var effectivePrecision = Math.min(precision, 20);
+
+            // Convert g/G to f/F or e/E, as per:
+            // http://pubs.opengroup.org/onlinepubs/9699919799/functions/printf.html
+            if (next == 103 || next == 71) {
+              isGeneral = true;
+              precision = precision || 1;
+              var exponent = parseInt(currArg.toExponential(effectivePrecision).split('e')[1], 10);
+              if (precision > exponent && exponent >= -4) {
+                next = ((next == 103) ? 'f' : 'F').charCodeAt(0);
+                precision -= exponent + 1;
+              } else {
+                next = ((next == 103) ? 'e' : 'E').charCodeAt(0);
+                precision--;
+              }
+              effectivePrecision = Math.min(precision, 20);
+            }
+
+            if (next == 101 || next == 69) {
+              argText = currArg.toExponential(effectivePrecision);
+              // Make sure the exponent has at least 2 digits.
+              if (/[eE][-+]\d$/.test(argText)) {
+                argText = argText.slice(0, -1) + '0' + argText.slice(-1);
+              }
+            } else if (next == 102 || next == 70) {
+              argText = currArg.toFixed(effectivePrecision);
+              if (currArg === 0 && reallyNegative(currArg)) {
+                argText = '-' + argText;
+              }
+            }
+
+            var parts = argText.split('e');
+            if (isGeneral && !flagAlternative) {
+              // Discard trailing zeros and periods.
+              while (parts[0].length > 1 && parts[0].includes('.') &&
+                (parts[0].slice(-1) == '0' || parts[0].slice(-1) == '.')) {
+                parts[0] = parts[0].slice(0, -1);
+              }
+            } else {
+              // Make sure we have a period in alternative mode.
+              if (flagAlternative && argText.indexOf('.') == -1) parts[0] += '.';
+              // Zero pad until required precision.
+              while (precision > effectivePrecision++) parts[0] += '0';
+            }
+            argText = parts[0] + (parts.length > 1 ? 'e' + parts[1] : '');
+
+            // Capitalize 'E' if needed.
+            if (next == 69) argText = argText.toUpperCase();
+
+            // Add sign.
+            if (currArg >= 0) {
+              if (flagAlwaysSigned) {
+                argText = '+' + argText;
+              } else if (flagPadSign) {
+                argText = ' ' + argText;
+              }
+            }
+          }
+
+          // Add padding.
+          while (argText.length < width) {
+            if (flagLeftAlign) {
+              argText += ' ';
+            } else {
+              if (flagZeroPad && (argText[0] == '-' || argText[0] == '+')) {
+                argText = argText[0] + '0' + argText.slice(1);
+              } else {
+                argText = (flagZeroPad ? '0' : ' ') + argText;
+              }
+            }
+          }
+
+          // Adjust case.
+          if (next < 97) argText = argText.toUpperCase();
+
+          // Insert the result into the buffer.
+          argText.split('').forEach(function (chr) {
+            ret.push(chr.charCodeAt(0));
+          });
+          break;
+        }
+        case 's': {
+          // String.
+          var arg = getNextArg('i8*');
+          var argLength = arg ? strLen(arg) : '(null)'.length;
+          if (precisionSet) argLength = Math.min(argLength, precision);
+          if (!flagLeftAlign) {
+            while (argLength < width--) {
+              ret.push(32);
+            }
+          }
+          if (arg) {
+            for (var i = 0; i < argLength; i++) {
+              ret.push(HEAPU8[((arg++) >> 0)]);
+            }
+          } else {
+            ret = ret.concat(intArrayFromString('(null)'.substr(0, argLength), true));
+          }
+          if (flagLeftAlign) {
+            while (argLength < width--) {
+              ret.push(32);
+            }
+          }
+          break;
+        }
+        case 'c': {
+          // Character.
+          if (flagLeftAlign) ret.push(getNextArg('i8'));
+          while (--width > 0) {
+            ret.push(32);
+          }
+          if (!flagLeftAlign) ret.push(getNextArg('i8'));
+          break;
+        }
+        case 'n': {
+          // Write the length written so far to the next parameter.
+          var ptr = getNextArg('i32*');
+          HEAP32[((ptr) >> 2)] = ret.length;
+          break;
+        }
+        case '%': {
+          // Literal percent sign.
           ret.push(curr);
-          textIndex += 1;
+          break;
         }
-      }
-      return ret;
-    }
-  
-  function traverseStack(args) {
-      if (!args || !args.callee || !args.callee.name) {
-        return [null, '', ''];
-      }
-  
-      var funstr = args.callee.toString();
-      var funcname = args.callee.name;
-      var str = '(';
-      var first = true;
-      for (var i in args) {
-        var a = args[i];
-        if (!first) {
-          str += ", ";
-        }
-        first = false;
-        if (typeof a == 'number' || typeof a == 'string') {
-          str += a;
-        } else {
-          str += '(' + typeof a + ')';
-        }
-      }
-      str += ')';
-      var caller = args.callee.caller;
-      args = caller ? caller.arguments : [];
-      if (first)
-        str = '';
-      return [args, funcname, str];
-    }
-  
-  function jsStackTrace() {
-      var error = new Error();
-      if (!error.stack) {
-        // IE10+ special cases: It does have callstack info, but it is only
-        // populated if an Error object is thrown, so try that as a special-case.
-        try {
-          throw new Error();
-        } catch(e) {
-          error = e;
-        }
-        if (!error.stack) {
-          return '(no stack trace available)';
-        }
-      }
-      return error.stack.toString();
-    }
-  
-  /** @param {number=} flags */
-  function _emscripten_get_callstack_js(flags) {
-      var callstack = jsStackTrace();
-  
-      // Find the symbols in the callstack that corresponds to the functions that
-      // report callstack information, and remove everything up to these from the
-      // output.
-      var iThisFunc = callstack.lastIndexOf('_emscripten_log');
-      var iThisFunc2 = callstack.lastIndexOf('_emscripten_get_callstack');
-      var iNextLine = callstack.indexOf('\n', Math.max(iThisFunc, iThisFunc2))+1;
-      callstack = callstack.slice(iNextLine);
-  
-      if (flags & 32) {
-        warnOnce('EM_LOG_DEMANGLE is deprecated; ignoring');
-      }
-  
-      // If user requested to see the original source stack, but no source map
-      // information is available, just fall back to showing the JS stack.
-      if (flags & 8 && typeof emscripten_source_map == 'undefined') {
-        warnOnce('Source map information is not available, emscripten_log with EM_LOG_C_STACK will be ignored. Build with "--pre-js $EMSCRIPTEN/src/emscripten-source-map.min.js" linker flag to add source map loading to code.');
-        flags ^= 8;
-        flags |= 16;
-      }
-  
-      var stack_args = null;
-      if (flags & 128) {
-        // To get the actual parameters to the functions, traverse the stack via
-        // the unfortunately deprecated 'arguments.callee' method, if it works:
-        stack_args = traverseStack(arguments);
-        while (stack_args[1].includes('_emscripten_'))
-          stack_args = traverseStack(stack_args[0]);
-      }
-  
-      // Process all lines:
-      var lines = callstack.split('\n');
-      callstack = '';
-      // New FF30 with column info: extract components of form:
-      // '       Object._main@http://server.com:4324:12'
-      var newFirefoxRe = new RegExp('\\s*(.*?)@(.*?):([0-9]+):([0-9]+)');
-      // Old FF without column info: extract components of form:
-      // '       Object._main@http://server.com:4324'
-      var firefoxRe = new RegExp('\\s*(.*?)@(.*):(.*)(:(.*))?');
-      // Extract components of form:
-      // '    at Object._main (http://server.com/file.html:4324:12)'
-      var chromeRe = new RegExp('\\s*at (.*?) \\\((.*):(.*):(.*)\\\)');
-  
-      for (var l in lines) {
-        var line = lines[l];
-  
-        var symbolName = '';
-        var file = '';
-        var lineno = 0;
-        var column = 0;
-  
-        var parts = chromeRe.exec(line);
-        if (parts && parts.length == 5) {
-          symbolName = parts[1];
-          file = parts[2];
-          lineno = parts[3];
-          column = parts[4];
-        } else {
-          parts = newFirefoxRe.exec(line);
-          if (!parts) parts = firefoxRe.exec(line);
-          if (parts && parts.length >= 4) {
-            symbolName = parts[1];
-            file = parts[2];
-            lineno = parts[3];
-            // Old Firefox doesn't carry column information, but in new FF30, it
-            // is present. See https://bugzilla.mozilla.org/show_bug.cgi?id=762556
-            column = parts[4]|0;
-          } else {
-            // Was not able to extract this line for demangling/sourcemapping
-            // purposes. Output it as-is.
-            callstack += line + '\n';
-            continue;
+        default: {
+          // Unknown specifiers remain untouched.
+          for (var i = startTextIndex; i < textIndex + 2; i++) {
+            ret.push(HEAP8[((i) >> 0)]);
           }
         }
-  
-        var haveSourceMap = false;
-  
-        if (flags & 8) {
-          var orig = emscripten_source_map.originalPositionFor({line: lineno, column: column});
-          haveSourceMap = (orig && orig.source);
-          if (haveSourceMap) {
-            if (flags & 64) {
-              orig.source = orig.source.substring(orig.source.replace(/\\/g, "/").lastIndexOf('/')+1);
-            }
-            callstack += '    at ' + symbolName + ' (' + orig.source + ':' + orig.line + ':' + orig.column + ')\n';
-          }
-        }
-        if ((flags & 16) || !haveSourceMap) {
-          if (flags & 64) {
-            file = file.substring(file.replace(/\\/g, "/").lastIndexOf('/')+1);
-          }
-          callstack += (haveSourceMap ? ('     = ' + symbolName) : ('    at '+ symbolName)) + ' (' + file + ':' + lineno + ':' + column + ')\n';
-        }
-  
-        // If we are still keeping track with the callstack by traversing via
-        // 'arguments.callee', print the function parameters as well.
-        if (flags & 128 && stack_args[0]) {
-          if (stack_args[1] == symbolName && stack_args[2].length > 0) {
-            callstack = callstack.replace(/\s+$/, '');
-            callstack += ' with values: ' + stack_args[1] + stack_args[2] + '\n';
-          }
-          stack_args = traverseStack(stack_args[0]);
-        }
       }
-      // Trim extra whitespace at the end of the output.
-      callstack = callstack.replace(/\s+$/, '');
-      return callstack;
+      textIndex += 2;
+      // TODO: Support a/A (hex float) and m (last error) specifiers.
+      // TODO: Support %1${specifier} for arg selection.
+    } else {
+      ret.push(curr);
+      textIndex += 1;
     }
-  function _emscripten_log_js(flags, str) {
-      if (flags & 24) {
-        str = str.replace(/\s+$/, ''); // Ensure the message and the callstack are joined cleanly with exactly one newline.
-        str += (str.length > 0 ? '\n' : '') + _emscripten_get_callstack_js(flags);
-      }
-  
-      if (flags & 1) {
-        if (flags & 4) {
-          console.error(str);
-        } else if (flags & 2) {
-          console.warn(str);
-        } else if (flags & 512) {
-          console.info(str);
-        } else if (flags & 256) {
-          console.debug(str);
-        } else {
-          console.log(str);
-        }
-      } else if (flags & 6) {
-        err(str);
+  }
+  return ret;
+}
+
+function traverseStack(args) {
+  if (!args || !args.callee || !args.callee.name) {
+    return [null, '', ''];
+  }
+
+  var funstr = args.callee.toString();
+  var funcname = args.callee.name;
+  var str = '(';
+  var first = true;
+  for (var i in args) {
+    var a = args[i];
+    if (!first) {
+      str += ", ";
+    }
+    first = false;
+    if (typeof a == 'number' || typeof a == 'string') {
+      str += a;
+    } else {
+      str += '(' + typeof a + ')';
+    }
+  }
+  str += ')';
+  var caller = args.callee.caller;
+  args = caller ? caller.arguments : [];
+  if (first)
+    str = '';
+  return [args, funcname, str];
+}
+
+function jsStackTrace() {
+  var error = new Error();
+  if (!error.stack) {
+    // IE10+ special cases: It does have callstack info, but it is only
+    // populated if an Error object is thrown, so try that as a special-case.
+    try {
+      throw new Error();
+    } catch (e) {
+      error = e;
+    }
+    if (!error.stack) {
+      return '(no stack trace available)';
+    }
+  }
+  return error.stack.toString();
+}
+
+/** @param {number=} flags */
+function _emscripten_get_callstack_js(flags) {
+  var callstack = jsStackTrace();
+
+  // Find the symbols in the callstack that corresponds to the functions that
+  // report callstack information, and remove everything up to these from the
+  // output.
+  var iThisFunc = callstack.lastIndexOf('_emscripten_log');
+  var iThisFunc2 = callstack.lastIndexOf('_emscripten_get_callstack');
+  var iNextLine = callstack.indexOf('\n', Math.max(iThisFunc, iThisFunc2)) + 1;
+  callstack = callstack.slice(iNextLine);
+
+  if (flags & 32) {
+    warnOnce('EM_LOG_DEMANGLE is deprecated; ignoring');
+  }
+
+  // If user requested to see the original source stack, but no source map
+  // information is available, just fall back to showing the JS stack.
+  if (flags & 8 && typeof emscripten_source_map == 'undefined') {
+    warnOnce('Source map information is not available, emscripten_log with EM_LOG_C_STACK will be ignored. Build with "--pre-js $EMSCRIPTEN/src/emscripten-source-map.min.js" linker flag to add source map loading to code.');
+    flags ^= 8;
+    flags |= 16;
+  }
+
+  var stack_args = null;
+  if (flags & 128) {
+    // To get the actual parameters to the functions, traverse the stack via
+    // the unfortunately deprecated 'arguments.callee' method, if it works:
+    stack_args = traverseStack(arguments);
+    while (stack_args[1].includes('_emscripten_'))
+      stack_args = traverseStack(stack_args[0]);
+  }
+
+  // Process all lines:
+  var lines = callstack.split('\n');
+  callstack = '';
+  // New FF30 with column info: extract components of form:
+  // '       Object._main@http://server.com:4324:12'
+  var newFirefoxRe = new RegExp('\\s*(.*?)@(.*?):([0-9]+):([0-9]+)');
+  // Old FF without column info: extract components of form:
+  // '       Object._main@http://server.com:4324'
+  var firefoxRe = new RegExp('\\s*(.*?)@(.*):(.*)(:(.*))?');
+  // Extract components of form:
+  // '    at Object._main (http://server.com/file.html:4324:12)'
+  var chromeRe = new RegExp('\\s*at (.*?) \\\((.*):(.*):(.*)\\\)');
+
+  for (var l in lines) {
+    var line = lines[l];
+
+    var symbolName = '';
+    var file = '';
+    var lineno = 0;
+    var column = 0;
+
+    var parts = chromeRe.exec(line);
+    if (parts && parts.length == 5) {
+      symbolName = parts[1];
+      file = parts[2];
+      lineno = parts[3];
+      column = parts[4];
+    } else {
+      parts = newFirefoxRe.exec(line);
+      if (!parts) parts = firefoxRe.exec(line);
+      if (parts && parts.length >= 4) {
+        symbolName = parts[1];
+        file = parts[2];
+        lineno = parts[3];
+        // Old Firefox doesn't carry column information, but in new FF30, it
+        // is present. See https://bugzilla.mozilla.org/show_bug.cgi?id=762556
+        column = parts[4] | 0;
       } else {
-        out(str);
+        // Was not able to extract this line for demangling/sourcemapping
+        // purposes. Output it as-is.
+        callstack += line + '\n';
+        continue;
       }
     }
-  function _emscripten_log(flags, format, varargs) {
-      var result = formatString(format, varargs);
-      var str = UTF8ArrayToString(result, 0);
-      _emscripten_log_js(flags, str);
-    }
 
-  function _emscripten_memcpy_big(dest, src, num) {
-      HEAPU8.copyWithin(dest, src, src + num);
-    }
+    var haveSourceMap = false;
 
-  function getHeapMax() {
-      return HEAPU8.length;
-    }
-  
-  function abortOnCannotGrowMemory(requestedSize) {
-      abort('Cannot enlarge memory arrays to size ' + requestedSize + ' bytes (OOM). Either (1) compile with -sINITIAL_MEMORY=X with X higher than the current value ' + HEAP8.length + ', (2) compile with -sALLOW_MEMORY_GROWTH which allows increasing the size at runtime, or (3) if you want malloc to return NULL (0) instead of this abort, compile with -sABORTING_MALLOC=0');
-    }
-  function _emscripten_resize_heap(requestedSize) {
-      var oldSize = HEAPU8.length;
-      requestedSize = requestedSize >>> 0;
-      abortOnCannotGrowMemory(requestedSize);
-    }
-
-  var ENV = {};
-  
-  function getExecutableName() {
-      return thisProgram || './this.program';
-    }
-  function getEnvStrings() {
-      if (!getEnvStrings.strings) {
-        // Default values.
-        // Browser language detection #8751
-        var lang = ((typeof navigator == 'object' && navigator.languages && navigator.languages[0]) || 'C').replace('-', '_') + '.UTF-8';
-        var env = {
-          'USER': 'web_user',
-          'LOGNAME': 'web_user',
-          'PATH': '/',
-          'PWD': '/',
-          'HOME': '/home/web_user',
-          'LANG': lang,
-          '_': getExecutableName()
-        };
-        // Apply the user-provided values, if any.
-        for (var x in ENV) {
-          // x is a key in ENV; if ENV[x] is undefined, that means it was
-          // explicitly set to be so. We allow user code to do that to
-          // force variables with default values to remain unset.
-          if (ENV[x] === undefined) delete env[x];
-          else env[x] = ENV[x];
+    if (flags & 8) {
+      var orig = emscripten_source_map.originalPositionFor({ line: lineno, column: column });
+      haveSourceMap = (orig && orig.source);
+      if (haveSourceMap) {
+        if (flags & 64) {
+          orig.source = orig.source.substring(orig.source.replace(/\\/g, "/").lastIndexOf('/') + 1);
         }
-        var strings = [];
-        for (var x in env) {
-          strings.push(x + '=' + env[x]);
-        }
-        getEnvStrings.strings = strings;
+        callstack += '    at ' + symbolName + ' (' + orig.source + ':' + orig.line + ':' + orig.column + ')\n';
       }
-      return getEnvStrings.strings;
     }
-  
-  /** @param {boolean=} dontAddNull */
-  function writeAsciiToMemory(str, buffer, dontAddNull) {
-      for (var i = 0; i < str.length; ++i) {
-        assert(str.charCodeAt(i) === (str.charCodeAt(i) & 0xff));
-        HEAP8[((buffer++)>>0)] = str.charCodeAt(i);
+    if ((flags & 16) || !haveSourceMap) {
+      if (flags & 64) {
+        file = file.substring(file.replace(/\\/g, "/").lastIndexOf('/') + 1);
       }
-      // Null-terminate the pointer to the HEAP.
-      if (!dontAddNull) HEAP8[((buffer)>>0)] = 0;
-    }
-  
-  var SYSCALLS = {varargs:undefined,get:function() {
-        assert(SYSCALLS.varargs != undefined);
-        SYSCALLS.varargs += 4;
-        var ret = HEAP32[(((SYSCALLS.varargs)-(4))>>2)];
-        return ret;
-      },getStr:function(ptr) {
-        var ret = UTF8ToString(ptr);
-        return ret;
-      }};
-  function _environ_get(__environ, environ_buf) {
-      var bufSize = 0;
-      getEnvStrings().forEach(function(string, i) {
-        var ptr = environ_buf + bufSize;
-        HEAPU32[(((__environ)+(i*4))>>2)] = ptr;
-        writeAsciiToMemory(string, ptr);
-        bufSize += string.length + 1;
-      });
-      return 0;
+      callstack += (haveSourceMap ? ('     = ' + symbolName) : ('    at ' + symbolName)) + ' (' + file + ':' + lineno + ':' + column + ')\n';
     }
 
-  
-  function _environ_sizes_get(penviron_count, penviron_buf_size) {
-      var strings = getEnvStrings();
-      HEAPU32[((penviron_count)>>2)] = strings.length;
-      var bufSize = 0;
-      strings.forEach(function(string) {
-        bufSize += string.length + 1;
-      });
-      HEAPU32[((penviron_buf_size)>>2)] = bufSize;
-      return 0;
+    // If we are still keeping track with the callstack by traversing via
+    // 'arguments.callee', print the function parameters as well.
+    if (flags & 128 && stack_args[0]) {
+      if (stack_args[1] == symbolName && stack_args[2].length > 0) {
+        callstack = callstack.replace(/\s+$/, '');
+        callstack += ' with values: ' + stack_args[1] + stack_args[2] + '\n';
+      }
+      stack_args = traverseStack(stack_args[0]);
     }
+  }
+  // Trim extra whitespace at the end of the output.
+  callstack = callstack.replace(/\s+$/, '');
+  return callstack;
+}
+function _emscripten_log_js(flags, str) {
+  if (flags & 24) {
+    str = str.replace(/\s+$/, ''); // Ensure the message and the callstack are joined cleanly with exactly one newline.
+    str += (str.length > 0 ? '\n' : '') + _emscripten_get_callstack_js(flags);
+  }
 
-  function _fd_close(fd) {
-      abort('fd_close called without SYSCALLS_REQUIRE_FILESYSTEM');
+  if (flags & 1) {
+    if (flags & 4) {
+      console.error(str);
+    } else if (flags & 2) {
+      console.warn(str);
+    } else if (flags & 512) {
+      console.info(str);
+    } else if (flags & 256) {
+      console.debug(str);
+    } else {
+      console.log(str);
     }
+  } else if (flags & 6) {
+    err(str);
+  } else {
+    out(str);
+  }
+}
+function _emscripten_log(flags, format, varargs) {
+  var result = formatString(format, varargs);
+  var str = UTF8ArrayToString(result, 0);
+  _emscripten_log_js(flags, str);
+}
 
-  function convertI32PairToI53Checked(lo, hi) {
-      assert(lo == (lo >>> 0) || lo == (lo|0)); // lo should either be a i32 or a u32
-      assert(hi === (hi|0));                    // hi should be a i32
-      return ((hi + 0x200000) >>> 0 < 0x400001 - !!lo) ? (lo >>> 0) + hi * 4294967296 : NaN;
-    }
-  
-  
-  
-  
-  function _fd_seek(fd, offset_low, offset_high, whence, newOffset) {
-      return 70;
-    }
+function _emscripten_memcpy_big(dest, src, num) {
+  HEAPU8.copyWithin(dest, src, src + num);
+}
 
-  var printCharBuffers = [null,[],[]];
-  function printChar(stream, curr) {
-      var buffer = printCharBuffers[stream];
-      assert(buffer);
-      if (curr === 0 || curr === 10) {
-        (stream === 1 ? out : err)(UTF8ArrayToString(buffer, 0));
-        buffer.length = 0;
+function getHeapMax() {
+  return HEAPU8.length;
+}
+
+function abortOnCannotGrowMemory(requestedSize) {
+  abort('Cannot enlarge memory arrays to size ' + requestedSize + ' bytes (OOM). Either (1) compile with -sINITIAL_MEMORY=X with X higher than the current value ' + HEAP8.length + ', (2) compile with -sALLOW_MEMORY_GROWTH which allows increasing the size at runtime, or (3) if you want malloc to return NULL (0) instead of this abort, compile with -sABORTING_MALLOC=0');
+}
+function _emscripten_resize_heap(requestedSize) {
+  var oldSize = HEAPU8.length;
+  requestedSize = requestedSize >>> 0;
+  abortOnCannotGrowMemory(requestedSize);
+}
+
+var ENV = {};
+
+function getExecutableName() {
+  return thisProgram || './this.program';
+}
+function getEnvStrings() {
+  if (!getEnvStrings.strings) {
+    // Default values.
+    // Browser language detection #8751
+    var lang = ((typeof navigator == 'object' && navigator.languages && navigator.languages[0]) || 'C').replace('-', '_') + '.UTF-8';
+    var env = {
+      'USER': 'web_user',
+      'LOGNAME': 'web_user',
+      'PATH': '/',
+      'PWD': '/',
+      'HOME': '/home/web_user',
+      'LANG': lang,
+      '_': getExecutableName()
+    };
+    // Apply the user-provided values, if any.
+    for (var x in ENV) {
+      // x is a key in ENV; if ENV[x] is undefined, that means it was
+      // explicitly set to be so. We allow user code to do that to
+      // force variables with default values to remain unset.
+      if (ENV[x] === undefined) delete env[x];
+      else env[x] = ENV[x];
+    }
+    var strings = [];
+    for (var x in env) {
+      strings.push(x + '=' + env[x]);
+    }
+    getEnvStrings.strings = strings;
+  }
+  return getEnvStrings.strings;
+}
+
+/** @param {boolean=} dontAddNull */
+function writeAsciiToMemory(str, buffer, dontAddNull) {
+  for (var i = 0; i < str.length; ++i) {
+    assert(str.charCodeAt(i) === (str.charCodeAt(i) & 0xff));
+    HEAP8[((buffer++) >> 0)] = str.charCodeAt(i);
+  }
+  // Null-terminate the pointer to the HEAP.
+  if (!dontAddNull) HEAP8[((buffer) >> 0)] = 0;
+}
+
+var SYSCALLS = {
+  varargs: undefined, get: function () {
+    assert(SYSCALLS.varargs != undefined);
+    SYSCALLS.varargs += 4;
+    var ret = HEAP32[(((SYSCALLS.varargs) - (4)) >> 2)];
+    return ret;
+  }, getStr: function (ptr) {
+    var ret = UTF8ToString(ptr);
+    return ret;
+  }
+};
+function _environ_get(__environ, environ_buf) {
+  var bufSize = 0;
+  getEnvStrings().forEach(function (string, i) {
+    var ptr = environ_buf + bufSize;
+    HEAPU32[(((__environ) + (i * 4)) >> 2)] = ptr;
+    writeAsciiToMemory(string, ptr);
+    bufSize += string.length + 1;
+  });
+  return 0;
+}
+
+
+function _environ_sizes_get(penviron_count, penviron_buf_size) {
+  var strings = getEnvStrings();
+  HEAPU32[((penviron_count) >> 2)] = strings.length;
+  var bufSize = 0;
+  strings.forEach(function (string) {
+    bufSize += string.length + 1;
+  });
+  HEAPU32[((penviron_buf_size) >> 2)] = bufSize;
+  return 0;
+}
+
+function _fd_close(fd) {
+  abort('fd_close called without SYSCALLS_REQUIRE_FILESYSTEM');
+}
+
+function convertI32PairToI53Checked(lo, hi) {
+  assert(lo == (lo >>> 0) || lo == (lo | 0)); // lo should either be a i32 or a u32
+  assert(hi === (hi | 0));                    // hi should be a i32
+  return ((hi + 0x200000) >>> 0 < 0x400001 - !!lo) ? (lo >>> 0) + hi * 4294967296 : NaN;
+}
+
+
+
+
+function _fd_seek(fd, offset_low, offset_high, whence, newOffset) {
+  return 70;
+}
+
+var printCharBuffers = [null, [], []];
+function printChar(stream, curr) {
+  var buffer = printCharBuffers[stream];
+  assert(buffer);
+  if (curr === 0 || curr === 10) {
+    (stream === 1 ? out : err)(UTF8ArrayToString(buffer, 0));
+    buffer.length = 0;
+  } else {
+    buffer.push(curr);
+  }
+}
+
+function flush_NO_FILESYSTEM() {
+  // flush anything remaining in the buffers during shutdown
+  _fflush(0);
+  if (printCharBuffers[1].length) printChar(1, 10);
+  if (printCharBuffers[2].length) printChar(2, 10);
+}
+
+
+function _fd_write(fd, iov, iovcnt, pnum) {
+  // hack to support printf in SYSCALLS_REQUIRE_FILESYSTEM=0
+  var num = 0;
+  for (var i = 0; i < iovcnt; i++) {
+    var ptr = HEAPU32[((iov) >> 2)];
+    var len = HEAPU32[(((iov) + (4)) >> 2)];
+    iov += 8;
+    for (var j = 0; j < len; j++) {
+      printChar(fd, HEAPU8[ptr + j]);
+    }
+    num += len;
+  }
+  HEAPU32[((pnum) >> 2)] = num;
+  return 0;
+}
+
+function __isLeapYear(year) {
+  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+}
+
+function __arraySum(array, index) {
+  var sum = 0;
+  for (var i = 0; i <= index; sum += array[i++]) {
+    // no-op
+  }
+  return sum;
+}
+
+
+var __MONTH_DAYS_LEAP = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+var __MONTH_DAYS_REGULAR = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+function __addDays(date, days) {
+  var newDate = new Date(date.getTime());
+  while (days > 0) {
+    var leap = __isLeapYear(newDate.getFullYear());
+    var currentMonth = newDate.getMonth();
+    var daysInCurrentMonth = (leap ? __MONTH_DAYS_LEAP : __MONTH_DAYS_REGULAR)[currentMonth];
+
+    if (days > daysInCurrentMonth - newDate.getDate()) {
+      // we spill over to next month
+      days -= (daysInCurrentMonth - newDate.getDate() + 1);
+      newDate.setDate(1);
+      if (currentMonth < 11) {
+        newDate.setMonth(currentMonth + 1)
       } else {
-        buffer.push(curr);
+        newDate.setMonth(0);
+        newDate.setFullYear(newDate.getFullYear() + 1);
       }
-    }
-  
-  function flush_NO_FILESYSTEM() {
-      // flush anything remaining in the buffers during shutdown
-      _fflush(0);
-      if (printCharBuffers[1].length) printChar(1, 10);
-      if (printCharBuffers[2].length) printChar(2, 10);
-    }
-  
-  
-  function _fd_write(fd, iov, iovcnt, pnum) {
-      // hack to support printf in SYSCALLS_REQUIRE_FILESYSTEM=0
-      var num = 0;
-      for (var i = 0; i < iovcnt; i++) {
-        var ptr = HEAPU32[((iov)>>2)];
-        var len = HEAPU32[(((iov)+(4))>>2)];
-        iov += 8;
-        for (var j = 0; j < len; j++) {
-          printChar(fd, HEAPU8[ptr+j]);
-        }
-        num += len;
-      }
-      HEAPU32[((pnum)>>2)] = num;
-      return 0;
-    }
-
-  function __isLeapYear(year) {
-        return year%4 === 0 && (year%100 !== 0 || year%400 === 0);
-    }
-  
-  function __arraySum(array, index) {
-      var sum = 0;
-      for (var i = 0; i <= index; sum += array[i++]) {
-        // no-op
-      }
-      return sum;
-    }
-  
-  
-  var __MONTH_DAYS_LEAP = [31,29,31,30,31,30,31,31,30,31,30,31];
-  
-  var __MONTH_DAYS_REGULAR = [31,28,31,30,31,30,31,31,30,31,30,31];
-  function __addDays(date, days) {
-      var newDate = new Date(date.getTime());
-      while (days > 0) {
-        var leap = __isLeapYear(newDate.getFullYear());
-        var currentMonth = newDate.getMonth();
-        var daysInCurrentMonth = (leap ? __MONTH_DAYS_LEAP : __MONTH_DAYS_REGULAR)[currentMonth];
-  
-        if (days > daysInCurrentMonth-newDate.getDate()) {
-          // we spill over to next month
-          days -= (daysInCurrentMonth-newDate.getDate()+1);
-          newDate.setDate(1);
-          if (currentMonth < 11) {
-            newDate.setMonth(currentMonth+1)
-          } else {
-            newDate.setMonth(0);
-            newDate.setFullYear(newDate.getFullYear()+1);
-          }
-        } else {
-          // we stay in current month
-          newDate.setDate(newDate.getDate()+days);
-          return newDate;
-        }
-      }
-  
+    } else {
+      // we stay in current month
+      newDate.setDate(newDate.getDate() + days);
       return newDate;
     }
-  
-  
-  
-  
-  function writeArrayToMemory(array, buffer) {
-      assert(array.length >= 0, 'writeArrayToMemory array must have a length (should be an array or typed array)')
-      HEAP8.set(array, buffer);
+  }
+
+  return newDate;
+}
+
+
+
+
+function writeArrayToMemory(array, buffer) {
+  assert(array.length >= 0, 'writeArrayToMemory array must have a length (should be an array or typed array)')
+  HEAP8.set(array, buffer);
+}
+function _strftime(s, maxsize, format, tm) {
+  // size_t strftime(char *restrict s, size_t maxsize, const char *restrict format, const struct tm *restrict timeptr);
+  // http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html
+
+  var tm_zone = HEAP32[(((tm) + (40)) >> 2)];
+
+  var date = {
+    tm_sec: HEAP32[((tm) >> 2)],
+    tm_min: HEAP32[(((tm) + (4)) >> 2)],
+    tm_hour: HEAP32[(((tm) + (8)) >> 2)],
+    tm_mday: HEAP32[(((tm) + (12)) >> 2)],
+    tm_mon: HEAP32[(((tm) + (16)) >> 2)],
+    tm_year: HEAP32[(((tm) + (20)) >> 2)],
+    tm_wday: HEAP32[(((tm) + (24)) >> 2)],
+    tm_yday: HEAP32[(((tm) + (28)) >> 2)],
+    tm_isdst: HEAP32[(((tm) + (32)) >> 2)],
+    tm_gmtoff: HEAP32[(((tm) + (36)) >> 2)],
+    tm_zone: tm_zone ? UTF8ToString(tm_zone) : ''
+  };
+
+  var pattern = UTF8ToString(format);
+
+  // expand format
+  var EXPANSION_RULES_1 = {
+    '%c': '%a %b %d %H:%M:%S %Y',     // Replaced by the locale's appropriate date and time representation - e.g., Mon Aug  3 14:02:01 2013
+    '%D': '%m/%d/%y',                 // Equivalent to %m / %d / %y
+    '%F': '%Y-%m-%d',                 // Equivalent to %Y - %m - %d
+    '%h': '%b',                       // Equivalent to %b
+    '%r': '%I:%M:%S %p',              // Replaced by the time in a.m. and p.m. notation
+    '%R': '%H:%M',                    // Replaced by the time in 24-hour notation
+    '%T': '%H:%M:%S',                 // Replaced by the time
+    '%x': '%m/%d/%y',                 // Replaced by the locale's appropriate date representation
+    '%X': '%H:%M:%S',                 // Replaced by the locale's appropriate time representation
+    // Modified Conversion Specifiers
+    '%Ec': '%c',                      // Replaced by the locale's alternative appropriate date and time representation.
+    '%EC': '%C',                      // Replaced by the name of the base year (period) in the locale's alternative representation.
+    '%Ex': '%m/%d/%y',                // Replaced by the locale's alternative date representation.
+    '%EX': '%H:%M:%S',                // Replaced by the locale's alternative time representation.
+    '%Ey': '%y',                      // Replaced by the offset from %EC (year only) in the locale's alternative representation.
+    '%EY': '%Y',                      // Replaced by the full alternative year representation.
+    '%Od': '%d',                      // Replaced by the day of the month, using the locale's alternative numeric symbols, filled as needed with leading zeros if there is any alternative symbol for zero; otherwise, with leading <space> characters.
+    '%Oe': '%e',                      // Replaced by the day of the month, using the locale's alternative numeric symbols, filled as needed with leading <space> characters.
+    '%OH': '%H',                      // Replaced by the hour (24-hour clock) using the locale's alternative numeric symbols.
+    '%OI': '%I',                      // Replaced by the hour (12-hour clock) using the locale's alternative numeric symbols.
+    '%Om': '%m',                      // Replaced by the month using the locale's alternative numeric symbols.
+    '%OM': '%M',                      // Replaced by the minutes using the locale's alternative numeric symbols.
+    '%OS': '%S',                      // Replaced by the seconds using the locale's alternative numeric symbols.
+    '%Ou': '%u',                      // Replaced by the weekday as a number in the locale's alternative representation (Monday=1).
+    '%OU': '%U',                      // Replaced by the week number of the year (Sunday as the first day of the week, rules corresponding to %U ) using the locale's alternative numeric symbols.
+    '%OV': '%V',                      // Replaced by the week number of the year (Monday as the first day of the week, rules corresponding to %V ) using the locale's alternative numeric symbols.
+    '%Ow': '%w',                      // Replaced by the number of the weekday (Sunday=0) using the locale's alternative numeric symbols.
+    '%OW': '%W',                      // Replaced by the week number of the year (Monday as the first day of the week) using the locale's alternative numeric symbols.
+    '%Oy': '%y',                      // Replaced by the year (offset from %C ) using the locale's alternative numeric symbols.
+  };
+  for (var rule in EXPANSION_RULES_1) {
+    pattern = pattern.replace(new RegExp(rule, 'g'), EXPANSION_RULES_1[rule]);
+  }
+
+  var WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  function leadingSomething(value, digits, character) {
+    var str = typeof value == 'number' ? value.toString() : (value || '');
+    while (str.length < digits) {
+      str = character[0] + str;
     }
-  function _strftime(s, maxsize, format, tm) {
-      // size_t strftime(char *restrict s, size_t maxsize, const char *restrict format, const struct tm *restrict timeptr);
-      // http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html
-  
-      var tm_zone = HEAP32[(((tm)+(40))>>2)];
-  
-      var date = {
-        tm_sec: HEAP32[((tm)>>2)],
-        tm_min: HEAP32[(((tm)+(4))>>2)],
-        tm_hour: HEAP32[(((tm)+(8))>>2)],
-        tm_mday: HEAP32[(((tm)+(12))>>2)],
-        tm_mon: HEAP32[(((tm)+(16))>>2)],
-        tm_year: HEAP32[(((tm)+(20))>>2)],
-        tm_wday: HEAP32[(((tm)+(24))>>2)],
-        tm_yday: HEAP32[(((tm)+(28))>>2)],
-        tm_isdst: HEAP32[(((tm)+(32))>>2)],
-        tm_gmtoff: HEAP32[(((tm)+(36))>>2)],
-        tm_zone: tm_zone ? UTF8ToString(tm_zone) : ''
-      };
-  
-      var pattern = UTF8ToString(format);
-  
-      // expand format
-      var EXPANSION_RULES_1 = {
-        '%c': '%a %b %d %H:%M:%S %Y',     // Replaced by the locale's appropriate date and time representation - e.g., Mon Aug  3 14:02:01 2013
-        '%D': '%m/%d/%y',                 // Equivalent to %m / %d / %y
-        '%F': '%Y-%m-%d',                 // Equivalent to %Y - %m - %d
-        '%h': '%b',                       // Equivalent to %b
-        '%r': '%I:%M:%S %p',              // Replaced by the time in a.m. and p.m. notation
-        '%R': '%H:%M',                    // Replaced by the time in 24-hour notation
-        '%T': '%H:%M:%S',                 // Replaced by the time
-        '%x': '%m/%d/%y',                 // Replaced by the locale's appropriate date representation
-        '%X': '%H:%M:%S',                 // Replaced by the locale's appropriate time representation
-        // Modified Conversion Specifiers
-        '%Ec': '%c',                      // Replaced by the locale's alternative appropriate date and time representation.
-        '%EC': '%C',                      // Replaced by the name of the base year (period) in the locale's alternative representation.
-        '%Ex': '%m/%d/%y',                // Replaced by the locale's alternative date representation.
-        '%EX': '%H:%M:%S',                // Replaced by the locale's alternative time representation.
-        '%Ey': '%y',                      // Replaced by the offset from %EC (year only) in the locale's alternative representation.
-        '%EY': '%Y',                      // Replaced by the full alternative year representation.
-        '%Od': '%d',                      // Replaced by the day of the month, using the locale's alternative numeric symbols, filled as needed with leading zeros if there is any alternative symbol for zero; otherwise, with leading <space> characters.
-        '%Oe': '%e',                      // Replaced by the day of the month, using the locale's alternative numeric symbols, filled as needed with leading <space> characters.
-        '%OH': '%H',                      // Replaced by the hour (24-hour clock) using the locale's alternative numeric symbols.
-        '%OI': '%I',                      // Replaced by the hour (12-hour clock) using the locale's alternative numeric symbols.
-        '%Om': '%m',                      // Replaced by the month using the locale's alternative numeric symbols.
-        '%OM': '%M',                      // Replaced by the minutes using the locale's alternative numeric symbols.
-        '%OS': '%S',                      // Replaced by the seconds using the locale's alternative numeric symbols.
-        '%Ou': '%u',                      // Replaced by the weekday as a number in the locale's alternative representation (Monday=1).
-        '%OU': '%U',                      // Replaced by the week number of the year (Sunday as the first day of the week, rules corresponding to %U ) using the locale's alternative numeric symbols.
-        '%OV': '%V',                      // Replaced by the week number of the year (Monday as the first day of the week, rules corresponding to %V ) using the locale's alternative numeric symbols.
-        '%Ow': '%w',                      // Replaced by the number of the weekday (Sunday=0) using the locale's alternative numeric symbols.
-        '%OW': '%W',                      // Replaced by the week number of the year (Monday as the first day of the week) using the locale's alternative numeric symbols.
-        '%Oy': '%y',                      // Replaced by the year (offset from %C ) using the locale's alternative numeric symbols.
-      };
-      for (var rule in EXPANSION_RULES_1) {
-        pattern = pattern.replace(new RegExp(rule, 'g'), EXPANSION_RULES_1[rule]);
-      }
-  
-      var WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  
-      function leadingSomething(value, digits, character) {
-        var str = typeof value == 'number' ? value.toString() : (value || '');
-        while (str.length < digits) {
-          str = character[0]+str;
-        }
-        return str;
-      }
-  
-      function leadingNulls(value, digits) {
-        return leadingSomething(value, digits, '0');
-      }
-  
-      function compareByDay(date1, date2) {
-        function sgn(value) {
-          return value < 0 ? -1 : (value > 0 ? 1 : 0);
-        }
-  
-        var compare;
-        if ((compare = sgn(date1.getFullYear()-date2.getFullYear())) === 0) {
-          if ((compare = sgn(date1.getMonth()-date2.getMonth())) === 0) {
-            compare = sgn(date1.getDate()-date2.getDate());
-          }
-        }
-        return compare;
-      }
-  
-      function getFirstWeekStartDate(janFourth) {
-          switch (janFourth.getDay()) {
-            case 0: // Sunday
-              return new Date(janFourth.getFullYear()-1, 11, 29);
-            case 1: // Monday
-              return janFourth;
-            case 2: // Tuesday
-              return new Date(janFourth.getFullYear(), 0, 3);
-            case 3: // Wednesday
-              return new Date(janFourth.getFullYear(), 0, 2);
-            case 4: // Thursday
-              return new Date(janFourth.getFullYear(), 0, 1);
-            case 5: // Friday
-              return new Date(janFourth.getFullYear()-1, 11, 31);
-            case 6: // Saturday
-              return new Date(janFourth.getFullYear()-1, 11, 30);
-          }
-      }
-  
-      function getWeekBasedYear(date) {
-          var thisDate = __addDays(new Date(date.tm_year+1900, 0, 1), date.tm_yday);
-  
-          var janFourthThisYear = new Date(thisDate.getFullYear(), 0, 4);
-          var janFourthNextYear = new Date(thisDate.getFullYear()+1, 0, 4);
-  
-          var firstWeekStartThisYear = getFirstWeekStartDate(janFourthThisYear);
-          var firstWeekStartNextYear = getFirstWeekStartDate(janFourthNextYear);
-  
-          if (compareByDay(firstWeekStartThisYear, thisDate) <= 0) {
-            // this date is after the start of the first week of this year
-            if (compareByDay(firstWeekStartNextYear, thisDate) <= 0) {
-              return thisDate.getFullYear()+1;
-            }
-            return thisDate.getFullYear();
-          }
-          return thisDate.getFullYear()-1;
-      }
-  
-      var EXPANSION_RULES_2 = {
-        '%a': function(date) {
-          return WEEKDAYS[date.tm_wday].substring(0,3);
-        },
-        '%A': function(date) {
-          return WEEKDAYS[date.tm_wday];
-        },
-        '%b': function(date) {
-          return MONTHS[date.tm_mon].substring(0,3);
-        },
-        '%B': function(date) {
-          return MONTHS[date.tm_mon];
-        },
-        '%C': function(date) {
-          var year = date.tm_year+1900;
-          return leadingNulls((year/100)|0,2);
-        },
-        '%d': function(date) {
-          return leadingNulls(date.tm_mday, 2);
-        },
-        '%e': function(date) {
-          return leadingSomething(date.tm_mday, 2, ' ');
-        },
-        '%g': function(date) {
-          // %g, %G, and %V give values according to the ISO 8601:2000 standard week-based year.
-          // In this system, weeks begin on a Monday and week 1 of the year is the week that includes
-          // January 4th, which is also the week that includes the first Thursday of the year, and
-          // is also the first week that contains at least four days in the year.
-          // If the first Monday of January is the 2nd, 3rd, or 4th, the preceding days are part of
-          // the last week of the preceding year; thus, for Saturday 2nd January 1999,
-          // %G is replaced by 1998 and %V is replaced by 53. If December 29th, 30th,
-          // or 31st is a Monday, it and any following days are part of week 1 of the following year.
-          // Thus, for Tuesday 30th December 1997, %G is replaced by 1998 and %V is replaced by 01.
-  
-          return getWeekBasedYear(date).toString().substring(2);
-        },
-        '%G': function(date) {
-          return getWeekBasedYear(date);
-        },
-        '%H': function(date) {
-          return leadingNulls(date.tm_hour, 2);
-        },
-        '%I': function(date) {
-          var twelveHour = date.tm_hour;
-          if (twelveHour == 0) twelveHour = 12;
-          else if (twelveHour > 12) twelveHour -= 12;
-          return leadingNulls(twelveHour, 2);
-        },
-        '%j': function(date) {
-          // Day of the year (001-366)
-          return leadingNulls(date.tm_mday+__arraySum(__isLeapYear(date.tm_year+1900) ? __MONTH_DAYS_LEAP : __MONTH_DAYS_REGULAR, date.tm_mon-1), 3);
-        },
-        '%m': function(date) {
-          return leadingNulls(date.tm_mon+1, 2);
-        },
-        '%M': function(date) {
-          return leadingNulls(date.tm_min, 2);
-        },
-        '%n': function() {
-          return '\n';
-        },
-        '%p': function(date) {
-          if (date.tm_hour >= 0 && date.tm_hour < 12) {
-            return 'AM';
-          }
-          return 'PM';
-        },
-        '%S': function(date) {
-          return leadingNulls(date.tm_sec, 2);
-        },
-        '%t': function() {
-          return '\t';
-        },
-        '%u': function(date) {
-          return date.tm_wday || 7;
-        },
-        '%U': function(date) {
-          var days = date.tm_yday + 7 - date.tm_wday;
-          return leadingNulls(Math.floor(days / 7), 2);
-        },
-        '%V': function(date) {
-          // Replaced by the week number of the year (Monday as the first day of the week)
-          // as a decimal number [01,53]. If the week containing 1 January has four
-          // or more days in the new year, then it is considered week 1.
-          // Otherwise, it is the last week of the previous year, and the next week is week 1.
-          // Both January 4th and the first Thursday of January are always in week 1. [ tm_year, tm_wday, tm_yday]
-          var val = Math.floor((date.tm_yday + 7 - (date.tm_wday + 6) % 7 ) / 7);
-          // If 1 Jan is just 1-3 days past Monday, the previous week
-          // is also in this year.
-          if ((date.tm_wday + 371 - date.tm_yday - 2) % 7 <= 2) {
-            val++;
-          }
-          if (!val) {
-            val = 52;
-            // If 31 December of prev year a Thursday, or Friday of a
-            // leap year, then the prev year has 53 weeks.
-            var dec31 = (date.tm_wday + 7 - date.tm_yday - 1) % 7;
-            if (dec31 == 4 || (dec31 == 5 && __isLeapYear(date.tm_year%400-1))) {
-              val++;
-            }
-          } else if (val == 53) {
-            // If 1 January is not a Thursday, and not a Wednesday of a
-            // leap year, then this year has only 52 weeks.
-            var jan1 = (date.tm_wday + 371 - date.tm_yday) % 7;
-            if (jan1 != 4 && (jan1 != 3 || !__isLeapYear(date.tm_year)))
-              val = 1;
-          }
-          return leadingNulls(val, 2);
-        },
-        '%w': function(date) {
-          return date.tm_wday;
-        },
-        '%W': function(date) {
-          var days = date.tm_yday + 7 - ((date.tm_wday + 6) % 7);
-          return leadingNulls(Math.floor(days / 7), 2);
-        },
-        '%y': function(date) {
-          // Replaced by the last two digits of the year as a decimal number [00,99]. [ tm_year]
-          return (date.tm_year+1900).toString().substring(2);
-        },
-        '%Y': function(date) {
-          // Replaced by the year as a decimal number (for example, 1997). [ tm_year]
-          return date.tm_year+1900;
-        },
-        '%z': function(date) {
-          // Replaced by the offset from UTC in the ISO 8601:2000 standard format ( +hhmm or -hhmm ).
-          // For example, "-0430" means 4 hours 30 minutes behind UTC (west of Greenwich).
-          var off = date.tm_gmtoff;
-          var ahead = off >= 0;
-          off = Math.abs(off) / 60;
-          // convert from minutes into hhmm format (which means 60 minutes = 100 units)
-          off = (off / 60)*100 + (off % 60);
-          return (ahead ? '+' : '-') + String("0000" + off).slice(-4);
-        },
-        '%Z': function(date) {
-          return date.tm_zone;
-        },
-        '%%': function() {
-          return '%';
-        }
-      };
-  
-      // Replace %% with a pair of NULLs (which cannot occur in a C string), then
-      // re-inject them after processing.
-      pattern = pattern.replace(/%%/g, '\0\0')
-      for (var rule in EXPANSION_RULES_2) {
-        if (pattern.includes(rule)) {
-          pattern = pattern.replace(new RegExp(rule, 'g'), EXPANSION_RULES_2[rule](date));
-        }
-      }
-      pattern = pattern.replace(/\0\0/g, '%')
-  
-      var bytes = intArrayFromString(pattern, false);
-      if (bytes.length > maxsize) {
-        return 0;
-      }
-  
-      writeArrayToMemory(bytes, s);
-      return bytes.length-1;
-    }
-  function _strftime_l(s, maxsize, format, tm, loc) {
-      return _strftime(s, maxsize, format, tm); // no locale support yet
+    return str;
+  }
+
+  function leadingNulls(value, digits) {
+    return leadingSomething(value, digits, '0');
+  }
+
+  function compareByDay(date1, date2) {
+    function sgn(value) {
+      return value < 0 ? -1 : (value > 0 ? 1 : 0);
     }
 
-  
-  function _proc_exit(code) {
-      EXITSTATUS = code;
-      if (!keepRuntimeAlive()) {
-        if (Module['onExit']) Module['onExit'](code);
-        ABORT = true;
+    var compare;
+    if ((compare = sgn(date1.getFullYear() - date2.getFullYear())) === 0) {
+      if ((compare = sgn(date1.getMonth() - date2.getMonth())) === 0) {
+        compare = sgn(date1.getDate() - date2.getDate());
       }
-      quit_(code, new ExitStatus(code));
     }
-  /** @param {boolean|number=} implicit */
-  function exitJS(status, implicit) {
-      EXITSTATUS = status;
-  
-      checkUnflushedContent();
-  
-      // if exit() was called explicitly, warn the user if the runtime isn't actually being shut down
-      if (keepRuntimeAlive() && !implicit) {
-        var msg = 'program exited (with status: ' + status + '), but EXIT_RUNTIME is not set, so halting execution but not exiting the runtime or preventing further async execution (build with EXIT_RUNTIME=1, if you want a true shutdown)';
-        err(msg);
-      }
-  
-      _proc_exit(status);
-    }
+    return compare;
+  }
 
-  function handleException(e) {
-      // Certain exception types we do not treat as errors since they are used for
-      // internal control flow.
-      // 1. ExitStatus, which is thrown by exit()
-      // 2. "unwind", which is thrown by emscripten_unwind_to_js_event_loop() and others
-      //    that wish to return to JS event loop.
-      if (e instanceof ExitStatus || e == 'unwind') {
-        return EXITSTATUS;
-      }
-      checkStackCookie();
-      if (e instanceof WebAssembly.RuntimeError) {
-        if (_emscripten_stack_get_current() <= 0) {
-          err('Stack overflow detected.  You can try increasing -sSTACK_SIZE (currently set to ' + STACK_SIZE + ')');
-        }
-      }
-      quit_(1, e);
+  function getFirstWeekStartDate(janFourth) {
+    switch (janFourth.getDay()) {
+      case 0: // Sunday
+        return new Date(janFourth.getFullYear() - 1, 11, 29);
+      case 1: // Monday
+        return janFourth;
+      case 2: // Tuesday
+        return new Date(janFourth.getFullYear(), 0, 3);
+      case 3: // Wednesday
+        return new Date(janFourth.getFullYear(), 0, 2);
+      case 4: // Thursday
+        return new Date(janFourth.getFullYear(), 0, 1);
+      case 5: // Friday
+        return new Date(janFourth.getFullYear() - 1, 11, 31);
+      case 6: // Saturday
+        return new Date(janFourth.getFullYear() - 1, 11, 30);
     }
+  }
+
+  function getWeekBasedYear(date) {
+    var thisDate = __addDays(new Date(date.tm_year + 1900, 0, 1), date.tm_yday);
+
+    var janFourthThisYear = new Date(thisDate.getFullYear(), 0, 4);
+    var janFourthNextYear = new Date(thisDate.getFullYear() + 1, 0, 4);
+
+    var firstWeekStartThisYear = getFirstWeekStartDate(janFourthThisYear);
+    var firstWeekStartNextYear = getFirstWeekStartDate(janFourthNextYear);
+
+    if (compareByDay(firstWeekStartThisYear, thisDate) <= 0) {
+      // this date is after the start of the first week of this year
+      if (compareByDay(firstWeekStartNextYear, thisDate) <= 0) {
+        return thisDate.getFullYear() + 1;
+      }
+      return thisDate.getFullYear();
+    }
+    return thisDate.getFullYear() - 1;
+  }
+
+  var EXPANSION_RULES_2 = {
+    '%a': function (date) {
+      return WEEKDAYS[date.tm_wday].substring(0, 3);
+    },
+    '%A': function (date) {
+      return WEEKDAYS[date.tm_wday];
+    },
+    '%b': function (date) {
+      return MONTHS[date.tm_mon].substring(0, 3);
+    },
+    '%B': function (date) {
+      return MONTHS[date.tm_mon];
+    },
+    '%C': function (date) {
+      var year = date.tm_year + 1900;
+      return leadingNulls((year / 100) | 0, 2);
+    },
+    '%d': function (date) {
+      return leadingNulls(date.tm_mday, 2);
+    },
+    '%e': function (date) {
+      return leadingSomething(date.tm_mday, 2, ' ');
+    },
+    '%g': function (date) {
+      // %g, %G, and %V give values according to the ISO 8601:2000 standard week-based year.
+      // In this system, weeks begin on a Monday and week 1 of the year is the week that includes
+      // January 4th, which is also the week that includes the first Thursday of the year, and
+      // is also the first week that contains at least four days in the year.
+      // If the first Monday of January is the 2nd, 3rd, or 4th, the preceding days are part of
+      // the last week of the preceding year; thus, for Saturday 2nd January 1999,
+      // %G is replaced by 1998 and %V is replaced by 53. If December 29th, 30th,
+      // or 31st is a Monday, it and any following days are part of week 1 of the following year.
+      // Thus, for Tuesday 30th December 1997, %G is replaced by 1998 and %V is replaced by 01.
+
+      return getWeekBasedYear(date).toString().substring(2);
+    },
+    '%G': function (date) {
+      return getWeekBasedYear(date);
+    },
+    '%H': function (date) {
+      return leadingNulls(date.tm_hour, 2);
+    },
+    '%I': function (date) {
+      var twelveHour = date.tm_hour;
+      if (twelveHour == 0) twelveHour = 12;
+      else if (twelveHour > 12) twelveHour -= 12;
+      return leadingNulls(twelveHour, 2);
+    },
+    '%j': function (date) {
+      // Day of the year (001-366)
+      return leadingNulls(date.tm_mday + __arraySum(__isLeapYear(date.tm_year + 1900) ? __MONTH_DAYS_LEAP : __MONTH_DAYS_REGULAR, date.tm_mon - 1), 3);
+    },
+    '%m': function (date) {
+      return leadingNulls(date.tm_mon + 1, 2);
+    },
+    '%M': function (date) {
+      return leadingNulls(date.tm_min, 2);
+    },
+    '%n': function () {
+      return '\n';
+    },
+    '%p': function (date) {
+      if (date.tm_hour >= 0 && date.tm_hour < 12) {
+        return 'AM';
+      }
+      return 'PM';
+    },
+    '%S': function (date) {
+      return leadingNulls(date.tm_sec, 2);
+    },
+    '%t': function () {
+      return '\t';
+    },
+    '%u': function (date) {
+      return date.tm_wday || 7;
+    },
+    '%U': function (date) {
+      var days = date.tm_yday + 7 - date.tm_wday;
+      return leadingNulls(Math.floor(days / 7), 2);
+    },
+    '%V': function (date) {
+      // Replaced by the week number of the year (Monday as the first day of the week)
+      // as a decimal number [01,53]. If the week containing 1 January has four
+      // or more days in the new year, then it is considered week 1.
+      // Otherwise, it is the last week of the previous year, and the next week is week 1.
+      // Both January 4th and the first Thursday of January are always in week 1. [ tm_year, tm_wday, tm_yday]
+      var val = Math.floor((date.tm_yday + 7 - (date.tm_wday + 6) % 7) / 7);
+      // If 1 Jan is just 1-3 days past Monday, the previous week
+      // is also in this year.
+      if ((date.tm_wday + 371 - date.tm_yday - 2) % 7 <= 2) {
+        val++;
+      }
+      if (!val) {
+        val = 52;
+        // If 31 December of prev year a Thursday, or Friday of a
+        // leap year, then the prev year has 53 weeks.
+        var dec31 = (date.tm_wday + 7 - date.tm_yday - 1) % 7;
+        if (dec31 == 4 || (dec31 == 5 && __isLeapYear(date.tm_year % 400 - 1))) {
+          val++;
+        }
+      } else if (val == 53) {
+        // If 1 January is not a Thursday, and not a Wednesday of a
+        // leap year, then this year has only 52 weeks.
+        var jan1 = (date.tm_wday + 371 - date.tm_yday) % 7;
+        if (jan1 != 4 && (jan1 != 3 || !__isLeapYear(date.tm_year)))
+          val = 1;
+      }
+      return leadingNulls(val, 2);
+    },
+    '%w': function (date) {
+      return date.tm_wday;
+    },
+    '%W': function (date) {
+      var days = date.tm_yday + 7 - ((date.tm_wday + 6) % 7);
+      return leadingNulls(Math.floor(days / 7), 2);
+    },
+    '%y': function (date) {
+      // Replaced by the last two digits of the year as a decimal number [00,99]. [ tm_year]
+      return (date.tm_year + 1900).toString().substring(2);
+    },
+    '%Y': function (date) {
+      // Replaced by the year as a decimal number (for example, 1997). [ tm_year]
+      return date.tm_year + 1900;
+    },
+    '%z': function (date) {
+      // Replaced by the offset from UTC in the ISO 8601:2000 standard format ( +hhmm or -hhmm ).
+      // For example, "-0430" means 4 hours 30 minutes behind UTC (west of Greenwich).
+      var off = date.tm_gmtoff;
+      var ahead = off >= 0;
+      off = Math.abs(off) / 60;
+      // convert from minutes into hhmm format (which means 60 minutes = 100 units)
+      off = (off / 60) * 100 + (off % 60);
+      return (ahead ? '+' : '-') + String("0000" + off).slice(-4);
+    },
+    '%Z': function (date) {
+      return date.tm_zone;
+    },
+    '%%': function () {
+      return '%';
+    }
+  };
+
+  // Replace %% with a pair of NULLs (which cannot occur in a C string), then
+  // re-inject them after processing.
+  pattern = pattern.replace(/%%/g, '\0\0')
+  for (var rule in EXPANSION_RULES_2) {
+    if (pattern.includes(rule)) {
+      pattern = pattern.replace(new RegExp(rule, 'g'), EXPANSION_RULES_2[rule](date));
+    }
+  }
+  pattern = pattern.replace(/\0\0/g, '%')
+
+  var bytes = intArrayFromString(pattern, false);
+  if (bytes.length > maxsize) {
+    return 0;
+  }
+
+  writeArrayToMemory(bytes, s);
+  return bytes.length - 1;
+}
+function _strftime_l(s, maxsize, format, tm, loc) {
+  return _strftime(s, maxsize, format, tm); // no locale support yet
+}
+
+
+function _proc_exit(code) {
+  EXITSTATUS = code;
+  if (!keepRuntimeAlive()) {
+    if (Module['onExit']) Module['onExit'](code);
+    ABORT = true;
+  }
+  quit_(code, new ExitStatus(code));
+}
+/** @param {boolean|number=} implicit */
+function exitJS(status, implicit) {
+  EXITSTATUS = status;
+
+  checkUnflushedContent();
+
+  // if exit() was called explicitly, warn the user if the runtime isn't actually being shut down
+  if (keepRuntimeAlive() && !implicit) {
+    var msg = 'program exited (with status: ' + status + '), but EXIT_RUNTIME is not set, so halting execution but not exiting the runtime or preventing further async execution (build with EXIT_RUNTIME=1, if you want a true shutdown)';
+    err(msg);
+  }
+
+  _proc_exit(status);
+}
+
+function handleException(e) {
+  // Certain exception types we do not treat as errors since they are used for
+  // internal control flow.
+  // 1. ExitStatus, which is thrown by exit()
+  // 2. "unwind", which is thrown by emscripten_unwind_to_js_event_loop() and others
+  //    that wish to return to JS event loop.
+  if (e instanceof ExitStatus || e == 'unwind') {
+    return EXITSTATUS;
+  }
+  checkStackCookie();
+  if (e instanceof WebAssembly.RuntimeError) {
+    if (_emscripten_stack_get_current() <= 0) {
+      err('Stack overflow detected.  You can try increasing -sSTACK_SIZE (currently set to ' + STACK_SIZE + ')');
+    }
+  }
+  quit_(1, e);
+}
 
 var ASSERTIONS = true;
 
@@ -2869,22 +2870,22 @@ var _free = Module["_free"] = createExportWrapper("free");
 var setTempRet0 = Module["setTempRet0"] = createExportWrapper("setTempRet0");
 
 /** @type {function(...*):?} */
-var _emscripten_stack_init = Module["_emscripten_stack_init"] = function() {
+var _emscripten_stack_init = Module["_emscripten_stack_init"] = function () {
   return (_emscripten_stack_init = Module["_emscripten_stack_init"] = Module["asm"]["emscripten_stack_init"]).apply(null, arguments);
 };
 
 /** @type {function(...*):?} */
-var _emscripten_stack_get_free = Module["_emscripten_stack_get_free"] = function() {
+var _emscripten_stack_get_free = Module["_emscripten_stack_get_free"] = function () {
   return (_emscripten_stack_get_free = Module["_emscripten_stack_get_free"] = Module["asm"]["emscripten_stack_get_free"]).apply(null, arguments);
 };
 
 /** @type {function(...*):?} */
-var _emscripten_stack_get_base = Module["_emscripten_stack_get_base"] = function() {
+var _emscripten_stack_get_base = Module["_emscripten_stack_get_base"] = function () {
   return (_emscripten_stack_get_base = Module["_emscripten_stack_get_base"] = Module["asm"]["emscripten_stack_get_base"]).apply(null, arguments);
 };
 
 /** @type {function(...*):?} */
-var _emscripten_stack_get_end = Module["_emscripten_stack_get_end"] = function() {
+var _emscripten_stack_get_end = Module["_emscripten_stack_get_end"] = function () {
   return (_emscripten_stack_get_end = Module["_emscripten_stack_get_end"] = Module["asm"]["emscripten_stack_get_end"]).apply(null, arguments);
 };
 
@@ -2898,7 +2899,7 @@ var stackRestore = Module["stackRestore"] = createExportWrapper("stackRestore");
 var stackAlloc = Module["stackAlloc"] = createExportWrapper("stackAlloc");
 
 /** @type {function(...*):?} */
-var _emscripten_stack_get_current = Module["_emscripten_stack_get_current"] = function() {
+var _emscripten_stack_get_current = Module["_emscripten_stack_get_current"] = function () {
   return (_emscripten_stack_get_current = Module["_emscripten_stack_get_current"] = Module["asm"]["emscripten_stack_get_current"]).apply(null, arguments);
 };
 
@@ -2954,13 +2955,13 @@ var dynCall_iiiiijj = Module["dynCall_iiiiijj"] = createExportWrapper("dynCall_i
 var dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = createExportWrapper("dynCall_iiiiiijj");
 
 
-function invoke_iii(index,a1,a2) {
+function invoke_iii(index, a1, a2) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2);
-  } catch(e) {
+    return getWasmTableEntry(index)(a1, a2);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
@@ -2969,9 +2970,9 @@ function invoke_v(index) {
   var sp = stackSave();
   try {
     getWasmTableEntry(index)();
-  } catch(e) {
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
@@ -2980,163 +2981,163 @@ function invoke_i(index) {
   var sp = stackSave();
   try {
     return getWasmTableEntry(index)();
-  } catch(e) {
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_iiii(index,a1,a2,a3) {
+function invoke_iiii(index, a1, a2, a3) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2,a3);
-  } catch(e) {
+    return getWasmTableEntry(index)(a1, a2, a3);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_vii(index,a1,a2) {
+function invoke_vii(index, a1, a2) {
   var sp = stackSave();
   try {
-    getWasmTableEntry(index)(a1,a2);
-  } catch(e) {
+    getWasmTableEntry(index)(a1, a2);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_viii(index,a1,a2,a3) {
+function invoke_viii(index, a1, a2, a3) {
   var sp = stackSave();
   try {
-    getWasmTableEntry(index)(a1,a2,a3);
-  } catch(e) {
+    getWasmTableEntry(index)(a1, a2, a3);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_vi(index,a1) {
+function invoke_vi(index, a1) {
   var sp = stackSave();
   try {
     getWasmTableEntry(index)(a1);
-  } catch(e) {
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_viiii(index,a1,a2,a3,a4) {
+function invoke_viiii(index, a1, a2, a3, a4) {
   var sp = stackSave();
   try {
-    getWasmTableEntry(index)(a1,a2,a3,a4);
-  } catch(e) {
+    getWasmTableEntry(index)(a1, a2, a3, a4);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_ii(index,a1) {
+function invoke_ii(index, a1) {
   var sp = stackSave();
   try {
     return getWasmTableEntry(index)(a1);
-  } catch(e) {
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_iiiiiii(index,a1,a2,a3,a4,a5,a6) {
+function invoke_iiiiiii(index, a1, a2, a3, a4, a5, a6) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2,a3,a4,a5,a6);
-  } catch(e) {
+    return getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_iiiii(index,a1,a2,a3,a4) {
+function invoke_iiiii(index, a1, a2, a3, a4) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2,a3,a4);
-  } catch(e) {
+    return getWasmTableEntry(index)(a1, a2, a3, a4);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_iiiiii(index,a1,a2,a3,a4,a5) {
+function invoke_iiiiii(index, a1, a2, a3, a4, a5) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2,a3,a4,a5);
-  } catch(e) {
+    return getWasmTableEntry(index)(a1, a2, a3, a4, a5);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_vdiii(index,a1,a2,a3,a4) {
+function invoke_vdiii(index, a1, a2, a3, a4) {
   var sp = stackSave();
   try {
-    getWasmTableEntry(index)(a1,a2,a3,a4);
-  } catch(e) {
+    getWasmTableEntry(index)(a1, a2, a3, a4);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_idiii(index,a1,a2,a3,a4) {
+function invoke_idiii(index, a1, a2, a3, a4) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2,a3,a4);
-  } catch(e) {
+    return getWasmTableEntry(index)(a1, a2, a3, a4);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_iij(index,a1,a2,a3) {
+function invoke_iij(index, a1, a2, a3) {
   var sp = stackSave();
   try {
-    return dynCall_iij(index,a1,a2,a3);
-  } catch(e) {
+    return dynCall_iij(index, a1, a2, a3);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_iijiii(index,a1,a2,a3,a4,a5,a6) {
+function invoke_iijiii(index, a1, a2, a3, a4, a5, a6) {
   var sp = stackSave();
   try {
-    return dynCall_iijiii(index,a1,a2,a3,a4,a5,a6);
-  } catch(e) {
+    return dynCall_iijiii(index, a1, a2, a3, a4, a5, a6);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_iijjiii(index,a1,a2,a3,a4,a5,a6,a7,a8) {
+function invoke_iijjiii(index, a1, a2, a3, a4, a5, a6, a7, a8) {
   var sp = stackSave();
   try {
-    return dynCall_iijjiii(index,a1,a2,a3,a4,a5,a6,a7,a8);
-  } catch(e) {
+    return dynCall_iijjiii(index, a1, a2, a3, a4, a5, a6, a7, a8);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
@@ -3145,75 +3146,75 @@ function invoke_j(index) {
   var sp = stackSave();
   try {
     return dynCall_j(index);
-  } catch(e) {
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_iiji(index,a1,a2,a3,a4) {
+function invoke_iiji(index, a1, a2, a3, a4) {
   var sp = stackSave();
   try {
-    return dynCall_iiji(index,a1,a2,a3,a4);
-  } catch(e) {
+    return dynCall_iiji(index, a1, a2, a3, a4);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_vjjiii(index,a1,a2,a3,a4,a5,a6,a7) {
+function invoke_vjjiii(index, a1, a2, a3, a4, a5, a6, a7) {
   var sp = stackSave();
   try {
-    dynCall_vjjiii(index,a1,a2,a3,a4,a5,a6,a7);
-  } catch(e) {
+    dynCall_vjjiii(index, a1, a2, a3, a4, a5, a6, a7);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_ijjiii(index,a1,a2,a3,a4,a5,a6,a7) {
+function invoke_ijjiii(index, a1, a2, a3, a4, a5, a6, a7) {
   var sp = stackSave();
   try {
-    return dynCall_ijjiii(index,a1,a2,a3,a4,a5,a6,a7);
-  } catch(e) {
+    return dynCall_ijjiii(index, a1, a2, a3, a4, a5, a6, a7);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_vijj(index,a1,a2,a3,a4,a5) {
+function invoke_vijj(index, a1, a2, a3, a4, a5) {
   var sp = stackSave();
   try {
-    dynCall_vijj(index,a1,a2,a3,a4,a5);
-  } catch(e) {
+    dynCall_vijj(index, a1, a2, a3, a4, a5);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_iijj(index,a1,a2,a3,a4,a5) {
+function invoke_iijj(index, a1, a2, a3, a4, a5) {
   var sp = stackSave();
   try {
-    return dynCall_iijj(index,a1,a2,a3,a4,a5);
-  } catch(e) {
+    return dynCall_iijj(index, a1, a2, a3, a4, a5);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
 
-function invoke_vij(index,a1,a2,a3) {
+function invoke_vij(index, a1, a2, a3) {
   var sp = stackSave();
   try {
-    dynCall_vij(index,a1,a2,a3);
-  } catch(e) {
+    dynCall_vij(index, a1, a2, a3);
+  } catch (e) {
     stackRestore(sp);
-    if (e !== e+0) throw e;
+    if (e !== e + 0) throw e;
     _setThrew(1, 0);
   }
 }
@@ -3664,7 +3665,7 @@ function run(args) {
     return;
   }
 
-    stackCheckInit();
+  stackCheckInit();
 
   preRun();
 
@@ -3695,14 +3696,13 @@ function run(args) {
 
   if (Module['setStatus']) {
     Module['setStatus']('Running...');
-    setTimeout(function() {
-      setTimeout(function() {
+    setTimeout(function () {
+      setTimeout(function () {
         Module['setStatus']('');
       }, 1);
       doRun();
     }, 1);
-  } else
-  {
+  } else {
     doRun();
   }
   checkStackCookie();
@@ -3728,7 +3728,7 @@ function checkUnflushedContent() {
   }
   try { // it doesn't matter if it fails
     flush_NO_FILESYSTEM();
-  } catch(e) {}
+  } catch (e) { }
   out = oldOut;
   err = oldErr;
   if (has) {

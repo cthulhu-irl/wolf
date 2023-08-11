@@ -104,6 +104,3 @@ jobs:
         with:
           name: sarif-file
           path: ${{ steps.run-analysis.outputs.sarif }}
-
-      - name: Build CMake in Release mode
-        run: cmake --build ${{ env.build }} --config Release
