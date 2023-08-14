@@ -99,11 +99,6 @@ public:
     // not supported yet.
     w_message() = delete;
 
-//    w_message_type type() const noexcept
-//    {
-//        return convert_message_type(GST_MESSAGE_TYPE(msg_));
-//    }
-
     /**
      * @brief visit the message based on its type as the helper representative type.
      * @param p_visitor visitor to visit message variant.
@@ -129,7 +124,7 @@ private:
     {
         switch (GST_MESSAGE_TYPE(p_msg_raw)) {
             case GST_MESSAGE_EOS:
-                return std::forward<VisitorF>(w_message_eos{});
+                return std::forward<VisitorF>(p_visitor)(w_message_eos{});
             case GST_MESSAGE_ERROR:
                 return std::forward<VisitorF>(p_visitor)(
                     w_message_error(internal::w_raw_tag{}, p_msg_raw)
